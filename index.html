@@ -82,6 +82,20 @@ main{padding:12px 12px 24px;max-width:720px;margin:0 auto}
 .state{margin-left:auto;font-size:11px;font-weight:800;color:#8a94a6;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
 .state.closed{color:#b23c3c;border-color:#f0c9c9;background:#fdf0f0}
 .title{font-size:17px;font-weight:800;margin-top:8px;letter-spacing:-.2px;word-break:break-word}
+/* 제목 + 🔗 복사 — 긴 제목은 두 줄로 접히고 버튼은 오른쪽에 붙어 있게 */
+.titleline{display:flex;align-items:flex-start;gap:8px;margin-top:8px}
+.titleline .title{margin-top:0;flex:1 1 auto;min-width:0}
+.link-copy{flex:0 0 auto;height:30px;padding:0 9px;border-radius:999px;background:#eef4ff;border:1px solid #cfdcf3;
+  color:#1d4b86;font-weight:800;font-size:12.5px;line-height:1;display:inline-flex;align-items:center;gap:3px;
+  white-space:nowrap;margin-top:1px}
+.link-copy:active{transform:scale(.95)}
+/* 딥링크로 들어온 모임 카드 잠깐 강조 */
+.card.hl{border-color:#c9dd4a;animation:cardhl 2.8s ease-out}
+@keyframes cardhl{
+  0%{box-shadow:0 0 0 0 rgba(215,230,74,.95),0 1px 3px rgba(22,32,46,.07)}
+  25%{box-shadow:0 0 0 6px rgba(215,230,74,.85),0 1px 3px rgba(22,32,46,.07)}
+  100%{box-shadow:0 0 0 6px rgba(215,230,74,0),0 1px 3px rgba(22,32,46,.07)}
+}
 .meta{font-size:13.5px;color:var(--muted);margin-top:4px;word-break:break-word}
 .counts{display:flex;gap:10px;font-size:13px;font-weight:700;margin:10px 0 8px;color:var(--muted)}
 .counts b.a{color:var(--yes)} .counts b.m{color:var(--maybe)} .counts b.n{color:var(--no)}
@@ -307,6 +321,19 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
   </div>
 </div>
 
+<!-- 모임 링크(복사가 막혔을 때 직접 복사하는 창) -->
+<div class="mask" id="maskShare">
+  <div class="sheet">
+    <h2>🔗 모임 링크</h2>
+    <textarea class="copyarea" id="shareText" spellcheck="false" style="min-height:150px"></textarea>
+    <div class="note">복사가 안 되면 위 글자를 길게 눌러 '복사'하고 카톡방에 붙여넣으세요.</div>
+    <div class="actions">
+      <button class="btn-ghost" id="shareClose">닫기</button>
+      <button class="btn-primary" id="shareOk">🔗 복사</button>
+    </div>
+  </div>
+</div>
+
 <!-- 카톡 정산 문구 -->
 <div class="mask" id="maskCopy">
   <div class="sheet">
@@ -488,6 +515,23 @@ function kakaoText(ev, unit, pay) {
   return lines.join('\n');
 }
 
+/* ---------- 모임 링크 복사(카톡 초대 문구) ----------
+   카톡 일반 글자에는 링크를 숨길 수 없어서, 제목·일시·장소와 함께
+   '이 모임만 여는 주소(?ev=모임ID)'를 같이 복사한다. */
+function appBaseUrl() { return location.origin + location.pathname; }
+function shareLink(ev) { return appBaseUrl() + '?ev=' + encodeURIComponent(String((ev && ev.id) || '')); }
+function inviteText(ev) {
+  var lines = [];
+  var head = typeEmoji(ev.type) + ' [' + typeLabel(ev.type) + ']';
+  var title = displayTitle(ev);
+  if (title && title !== typeLabel(ev.type)) head += ' ' + title;
+  lines.push(head);
+  lines.push('📅 ' + dateLabel(ev.date) + ' ' + timeLabel(ev.time) + (ev.place ? ' · ' + ev.place : ''));
+  lines.push('👇 눌러서 참석 투표하기');
+  lines.push(shareLink(ev));
+  return lines.join('\n');
+}
+
 /* ---------- 상태 ---------- */
 var state = { events: [], unit: 10, today: todayISO() };
 var myName = '';
@@ -496,6 +540,9 @@ var tab = '정기';
 var syncUrl = '';
 var lastSyncOk = 0;
 var lastError = '';
+var stateLoaded = false;           /* 시트/기기에서 모임 목록을 한 번이라도 받았는지 */
+var deepPending = '';              /* 주소의 ?ev=모임ID */
+var deepDone = false;              /* 딥링크 처리(탭 전환·스크롤·안내)를 마쳤는지 */
 
 function myNameTrim() { return String(myName || '').trim(); }
 
@@ -659,6 +706,45 @@ function voteBtnSt(ev, st) {
   return me && me.status === st ? ' on' : '';
 }
 
+/* ---------- 딥링크(?ev=모임ID) ----------
+   카톡으로 받은 주소로 들어오면 그 모임의 탭을 열고 카드로 이동한다. */
+var hl = { id: '', until: 0 };     /* 잠깐 강조할 카드(4초 새로고침으로 다시 그려도 유지) */
+function hlOn(id) { return !!(hl.id && hl.id === id && Date.now() < hl.until); }
+function cardEl(id) {
+  var sel;
+  try { sel = 'article.card[data-id="' + (window.CSS && CSS.escape ? CSS.escape(String(id)) : String(id)) + '"]'; }
+  catch (e) { sel = 'article.card[data-id="' + String(id) + '"]'; }
+  try { return document.querySelector(sel); } catch (e) { return null; }
+}
+function highlightCard(id) {
+  hl = { id: String(id), until: Date.now() + 2800 };
+  var el = cardEl(id);
+  if (el) {
+    el.classList.add('hl');
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    catch (e) { el.scrollIntoView(); }
+  }
+  setTimeout(function () {
+    if (hl.id !== String(id)) return;
+    hl = { id: '', until: 0 };
+    var cur = cardEl(id);
+    if (cur) cur.classList.remove('hl');
+  }, 2900);
+}
+function applyDeepLink() {
+  if (!deepPending || deepDone) return;
+  var ev = state.events.filter(function (x) { return String(x.id) === deepPending; })[0];
+  if (!ev) return;                       /* 아직 목록을 받기 전이거나 없는 모임 */
+  deepDone = true;
+  var wantTab = ev.type === '번개' ? '번개' : '정기';
+  if (tab !== wantTab) {
+    tab = wantTab;
+    $$('#tabs .tab').forEach(function (x) { x.classList.toggle('on', x.dataset.tab === tab); });
+    render();
+  }
+  highlightCard(deepPending);
+}
+
 function cardHTML(ev) {
   var att = namesOf(ev, '참석'), maybe = namesOf(ev, '미정'), no = namesOf(ev, '불참');
   var closed = ev.status === '마감';
@@ -692,13 +778,16 @@ function cardHTML(ev) {
       '</div>';
   }
 
-  return '<article class="card' + (closed ? ' closed' : '') + '" data-id="' + esc(ev.id) + '">' +
+  return '<article class="card' + (closed ? ' closed' : '') + (hlOn(ev.id) ? ' hl' : '') + '" data-id="' + esc(ev.id) + '">' +
     '<div class="row1">' +
       '<span class="tag ' + esc(ev.type) + '">' + typeEmoji(ev.type) + ' ' + typeLabel(ev.type) + '</span>' +
       '<span class="when' + (ev.date === state.today ? ' today' : '') + '">' + esc(dateLabel(ev.date)) + ' ' + esc(timeLabel(ev.time)) + '</span>' +
       (closed ? '<span class="state closed">마감</span>' : '') +
     '</div>' +
-    '<h3 class="title">' + esc(displayTitle(ev)) + '</h3>' +
+    '<div class="titleline">' +
+      '<h3 class="title">' + esc(displayTitle(ev)) + '</h3>' +
+      '<button class="link-copy" data-share="' + esc(ev.id) + '" title="모임 링크를 카톡방에 붙여넣기">🔗 복사</button>' +
+    '</div>' +
     (ev.place ? '<div class="meta">📍 ' + esc(ev.place) + '</div>' : '') +
     '<div class="counts"><span>참석 <b class="a">' + att.length + '</b></span><span>미정 <b class="m">' + maybe.length + '</b></span><span>불참 <b class="n">' + no.length + '</b></span></div>' +
     '<div class="votes">' +
@@ -743,13 +832,22 @@ function render() {
   } else {
     if (g.today.length) html += '<div class="sec">오늘</div>' + g.today.map(cardHTML).join('');
     if (g.upcoming.length) html += '<div class="sec">예정</div>' + g.upcoming.map(cardHTML).join('');
-    if (g.past.length) html += '<div class="sec">지난 모임</div>' + g.past.slice(0, 10).map(cardHTML).join('');
+    if (g.past.length) {
+      /* 평소에는 최근 10개만. 딥링크로 온 모임이 더 오래된 것이면 그것도 함께 보여 준다. */
+      var plist = g.past.slice(0, 10);
+      if (deepPending && !deepDone) {
+        g.past.forEach(function (e, i) { if (i >= 10 && String(e.id) === deepPending) plist.push(e); });
+      }
+      html += '<div class="sec">지난 모임</div>' + plist.map(cardHTML).join('');
+    }
     if (!g.today.length && !g.upcoming.length && !g.past.length) {
       html += '<div class="hint">이 탭에는 아직 모임이 없어요.</div>';
     }
   }
   $('#list').innerHTML = html;
   badge();
+  applyDeepLink();
+  if (deepPending && !deepDone && stateLoaded) { deepDone = true; toast('찾으려는 모임이 없어요'); }
 }
 
 document.addEventListener('focusout', function () {
@@ -759,7 +857,7 @@ document.addEventListener('focusout', function () {
 /* ---------- 상태 반영 ---------- */
 function applyState(r) {
   if (!r || r.ok !== true) return false;
-  if (Array.isArray(r.events)) state.events = r.events;
+  if (Array.isArray(r.events)) { state.events = r.events; stateLoaded = true; }
   if (r.unit) state.unit = r.unit;
   if (r.today) state.today = r.today;
   return true;
@@ -883,6 +981,8 @@ $('#list').addEventListener('click', function (e) {
   if (save) { saveFee(save.dataset.id); return; }
   var cp = e.target.closest('button[data-copy]');
   if (cp) { showCopy(cp.dataset.copy); return; }
+  var sh = e.target.closest('button[data-share]');
+  if (sh) { shareEvent(sh.dataset.share); return; }
   var cl = e.target.closest('button[data-close]');
   if (cl) { adminToggle(cl.dataset.close); return; }
   var del = e.target.closest('button[data-del]');
@@ -988,21 +1088,51 @@ $('#payClear').addEventListener('click', function () {
   refreshCopyText();
   toast('계좌 정보를 지웠어요');
 });
-function copyToClipboard(txt) {
+function copyToClipboard(txt, taId) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(txt).then(function () { return true; }).catch(function () { return legacyCopy(txt); });
+    return navigator.clipboard.writeText(txt).then(function () { return true; }).catch(function () { return legacyCopy(txt, taId); });
   }
-  return Promise.resolve(legacyCopy(txt));
+  return Promise.resolve(legacyCopy(txt, taId));
 }
-function legacyCopy(txt) {
+function legacyCopy(txt, taId) {
   try {
-    var ta = $('#copyText');
+    var ta = $('#' + (taId || 'copyText'));
+    if (!ta) return false;
+    if (ta.value !== txt) ta.value = txt;
     ta.focus(); ta.select();
     var ok = document.execCommand && document.execCommand('copy');
     ta.setSelectionRange(0, 0);
     return !!ok;
   } catch (e) { return false; }
 }
+
+/* ---------- 🔗 모임 링크 복사 ----------
+   브라우저가 복사를 막는 경우(카톡 인앱 등)에는 '됐다'고 속이지 않고
+   직접 긁어 복사할 수 있는 창을 연다. */
+function writeClipboard(txt) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(txt).then(function () { return true; }).catch(function () { return false; });
+  }
+  return Promise.resolve(false);
+}
+function shareEvent(id) {
+  var ev = state.events.filter(function (x) { return x.id === id; })[0];
+  if (!ev) return;
+  var txt = inviteText(ev);
+  writeClipboard(txt).then(function (okCopy) {
+    if (okCopy) { toast('모임 링크를 복사했어요 — 카톡방에 붙여넣기!'); return; }
+    $('#shareText').value = txt;
+    openMask('maskShare');
+    try { $('#shareText').focus(); $('#shareText').select(); } catch (e) {}
+    toast('자동 복사가 안 돼요 — 아래 글자를 길게 눌러 복사해 주세요');
+  });
+}
+$('#shareOk').addEventListener('click', function () {
+  copyToClipboard($('#shareText').value, 'shareText').then(function (okCopy) {
+    toast(okCopy ? '모임 링크를 복사했어요 — 카톡방에 붙여넣기!' : '길게 눌러 복사해 주세요');
+  });
+});
+$('#shareClose').addEventListener('click', function () { closeMask('maskShare'); });
 $('#copyOk').addEventListener('click', function () {
   copyToClipboard($('#copyText').value).then(function (okCopy) {
     toast(okCopy ? '복사했어요' : '길게 눌러 복사해 주세요');
@@ -1190,9 +1320,17 @@ $('#syncOk').addEventListener('click', function () {
     });
 });
 
+/* ---------- 딥링크(?ev=모임ID)로 들어온 경우 ---------- */
+function deepLinkId() {
+  var v = '';
+  try { v = new URLSearchParams(location.search).get('ev') || ''; } catch (e) { v = ''; }
+  return String(v).trim().slice(0, 60);
+}
+
 /* ---------- 시작 ---------- */
 (function init() {
   resolveSync();
+  deepPending = deepLinkId();
   try { myName = localStorage.getItem(K.name) || ''; } catch (e) { myName = ''; }
   loadPay();
   syncPayUI();
@@ -1215,7 +1353,8 @@ $('#syncOk').addEventListener('click', function () {
 
 /* 테스트에서 쓰는 작은 공개 창구 */
 window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won,
-  typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle, payLine: payLine, payInfo: payInfo };
+  typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle, payLine: payLine, payInfo: payInfo,
+  inviteText: inviteText, shareLink: shareLink, appBaseUrl: appBaseUrl };
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
    - 앱 화면(HTML·아이콘)은 캐시해서 카톡 인앱·지하주차장에서도 열리게
    - 구글 시트(Apps Script) 통신은 캐시하지 않고 그대로 보냄
    - 화면을 고칠 때는 아래 VERSION 을 올리면 기기에 새 화면이 내려간다 */
-const VERSION = 'cpick-attendance-v6';
+const VERSION = 'cpick-attendance-v7';
 const ASSETS = [
   './',
   './index.html',
