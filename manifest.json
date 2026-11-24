@@ -1,0 +1,17 @@
+{
+  "name": "C-PICK 참석·정산",
+  "short_name": "C-PICK 참석",
+  "description": "C-PICK 피클볼 동호회 — 매일 참석 투표와 번개 모임 1/N 정산(10원 미만 절사)",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f5f9",
+  "theme_color": "#12335f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

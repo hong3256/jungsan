@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C-PICK 참석·정산</title>
+<meta name="theme-color" content="#12335f">
+<meta name="description" content="C-PICK 피클볼 동호회 — 매일 참석 투표와 번개 모임 1/N 정산(10원 미만 절사)">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="C-PICK 참석">
+<meta name="application-name" content="C-PICK 참석">
+<meta name="format-detection" content="telephone=no">
+<style>
+:root{
+  --navy:#12335f; --navy2:#1d4b86; --ink:#16202e; --muted:#6a7688;
+  --line:#e3e8f0; --bg:#f3f5f9; --card:#fff;
+  --yes:#0f9d58; --yes-bg:#e8f7ee; --maybe:#e8a400; --maybe-bg:#fff6e0; --no:#d93a3a; --no-bg:#fdecec;
+  --lime:#d7e64a; --radius:16px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:16px; line-height:1.45;
+  -webkit-text-size-adjust:100%; padding-bottom:calc(84px + var(--safe-b));
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+h1,h2,h3,p{margin:0}
+
+/* ---------- 상단 ---------- */
+.top{position:sticky;top:0;z-index:30;background:linear-gradient(160deg,var(--navy),var(--navy2));color:#fff;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px}
+.top-row{display:flex;align-items:center;gap:8px}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.2px;display:flex;align-items:center;gap:6px}
+.brand small{font-weight:600;font-size:12px;opacity:.75;letter-spacing:0}
+.badge-sync{margin-left:auto;font-size:12px;font-weight:700;padding:5px 9px;border-radius:999px;
+  background:rgba(255,255,255,.14);color:#fff;white-space:nowrap}
+.badge-sync.on{background:#0f9d5833;color:#c8f5d9;border:1px solid #0f9d5877}
+.badge-sync.off{background:#d93a3a33;color:#ffd6d6;border:1px solid #d93a3a66}
+.namebar{display:flex;align-items:center;gap:8px;margin-top:9px}
+.namebar label{font-size:12px;opacity:.8;flex:0 0 auto}
+.namebar input{flex:1 1 auto;min-width:0;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12);color:#fff;padding:0 12px;font-size:15px}
+.namebar input::placeholder{color:rgba(255,255,255,.55)}
+.icon-btn{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.icon-btn.active{background:var(--lime);color:#14233a}
+
+/* ---------- 탭 ---------- */
+.tabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px 10px;background:#fff;
+  border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(18,51,95,.06)}
+.tab{flex:1 1 0;height:42px;border-radius:12px;font-weight:700;font-size:14px;color:var(--muted);
+  background:#f1f4f9;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab.on{background:var(--navy);color:#fff}
+.tab .n{font-size:12px;font-weight:700;background:rgba(0,0,0,.08);color:inherit;border-radius:999px;padding:1px 7px}
+.tab.on .n{background:rgba(255,255,255,.22)}
+
+/* ---------- 목록 ---------- */
+main{padding:12px 12px 24px;max-width:720px;margin:0 auto}
+.sec{margin:14px 2px 8px;font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.2px}
+.hint{background:#fff;border:1px dashed #c9d4e6;border-radius:14px;padding:14px;font-size:14px;color:var(--muted)}
+.hint b{color:var(--navy)}
+
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(22,32,46,.07),0 8px 24px -18px rgba(22,32,46,.5);border:1px solid #eef1f6}
+.card.closed{opacity:.82}
+.row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:800;padding:3px 8px;border-radius:999px}
+.tag.정기{background:#e7effb;color:#1d4b86}
+.tag.번개{background:#fff3d4;color:#9a6a00}
+.when{font-size:14px;font-weight:700;color:var(--navy)}
+.when.today{color:#0f9d58}
+.state{margin-left:auto;font-size:11px;font-weight:800;color:#8a94a6;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.state.closed{color:#b23c3c;border-color:#f0c9c9;background:#fdf0f0}
+.title{font-size:17px;font-weight:800;margin-top:8px;letter-spacing:-.2px;word-break:break-word}
+.meta{font-size:13.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+.counts{display:flex;gap:10px;font-size:13px;font-weight:700;margin:10px 0 8px;color:var(--muted)}
+.counts b.a{color:var(--yes)} .counts b.m{color:var(--maybe)} .counts b.n{color:var(--no)}
+
+.votes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vote{height:52px;border-radius:13px;font-weight:800;font-size:15px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;border:1.5px solid transparent;transition:transform .06s}
+.vote:active{transform:scale(.97)}
+.vote .lb{font-size:12px;font-weight:800;opacity:.85}
+.vote.yes{background:var(--yes-bg);color:#0b7a43}
+.vote.maybe{background:var(--maybe-bg);color:#946400}
+.vote.no{background:var(--no-bg);color:#b22b2b}
+.vote.on.yes{background:var(--yes);color:#fff;border-color:#0b7a43}
+.vote.on.maybe{background:var(--maybe);color:#fff;border-color:#946400}
+.vote.on.no{background:var(--no);color:#fff;border-color:#b22b2b}
+.vote[disabled]{opacity:.5}
+.names{margin-top:9px;font-size:13px;color:#4a5768;line-height:1.6;word-break:break-word}
+.names .k{font-weight:800;color:#2b3a4f}
+.names .k.a{color:var(--yes)} .names .k.m{color:#b07d00} .names .k.n{color:#b23c3c}
+.names .me{background:var(--lime);border-radius:5px;padding:0 3px;font-weight:800;color:#2a3a00}
+
+.feebox{margin-top:11px;background:#fffdf2;border:1px solid #f2e6bd;border-radius:13px;padding:11px}
+.feebox .fee-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.feebox .fee-top label{font-size:13px;font-weight:800;color:#7a6100}
+.feebox input.fee-input{width:120px;height:40px;border-radius:10px;border:1px solid #e2d3a2;background:#fff;
+  padding:0 10px;font-size:16px;text-align:right;font-weight:700}
+.feebox .fee-save{height:40px;padding:0 12px;border-radius:10px;background:var(--navy);color:#fff;font-weight:800;font-size:14px}
+.perline{display:flex;align-items:baseline;gap:8px;margin-top:9px;flex-wrap:wrap}
+.perline .per{font-size:24px;font-weight:900;color:var(--navy);letter-spacing:-.5px}
+.perline .mul{font-size:13px;color:#7c8798}
+.rem{font-size:12.5px;color:#8a7440;margin-top:3px}
+.copy-btn{margin-top:10px;width:100%;height:48px;border-radius:12px;background:#fee500;color:#3b1e1e;font-weight:800;font-size:15px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+
+.admintools{display:flex;align-items:center;gap:8px;background:#eef7ea;border:1px solid #cfe6c2;border-radius:12px;
+  padding:8px 10px;margin-bottom:10px;font-size:13px;font-weight:800;color:#2f6b23;flex-wrap:wrap}
+.admintools span{margin-right:auto}
+.admintools button{height:34px;padding:0 10px;border-radius:9px;background:#fff;border:1px solid #cfe6c2;color:#2f6b23;font-weight:800;font-size:12.5px}
+.adminrow{display:none;gap:8px;margin-top:10px;flex-wrap:wrap}
+body.admin .adminrow{display:flex}
+.adminrow button{height:38px;padding:0 12px;border-radius:10px;background:#eef2f8;color:#3a4a61;font-weight:700;font-size:13.5px}
+.adminrow button.danger{background:#fdecec;color:#b22b2b}
+
+/* ---------- 버튼/모달 ---------- */
+.fab{position:fixed;right:16px;bottom:calc(16px + var(--safe-b));z-index:40;height:54px;padding:0 20px;border-radius:999px;
+  background:var(--navy);color:#fff;font-weight:800;font-size:16px;box-shadow:0 10px 24px -8px rgba(18,51,95,.7);
+  display:flex;align-items:center;gap:6px}
+.mask{position:fixed;inset:0;z-index:50;background:rgba(11,20,33,.5);display:none;align-items:flex-end;justify-content:center}
+.mask.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + var(--safe-b));
+  max-height:92vh;overflow:auto;animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h2{font-size:18px;font-weight:900;margin-bottom:12px;letter-spacing:-.2px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:13px;font-weight:800;color:#4a5768;margin-bottom:5px}
+.field input,.field select{width:100%;height:48px;border-radius:12px;border:1.5px solid var(--line);background:#fbfcfe;padding:0 12px;font-size:16px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--navy2);background:#fff}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;height:48px;border-radius:12px;background:#f1f4f9;font-weight:800;color:var(--muted);border:1.5px solid transparent}
+.seg button.on{background:#e7effb;color:var(--navy);border-color:#b9cdea}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chips button{height:36px;padding:0 12px;border-radius:999px;background:#f1f4f9;font-weight:700;font-size:13.5px;color:#41506a}
+.chips button.on{background:var(--lime);color:#293a00}
+.actions{display:flex;gap:8px;margin-top:16px}
+.actions button{flex:1;height:52px;border-radius:13px;font-weight:900;font-size:16px}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-ghost{background:#eef2f8;color:#3a4a61}
+.btn-danger{background:#fdecec;color:#b22b2b}
+textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px solid var(--line);padding:12px;font-size:14px;line-height:1.55;background:#fbfcfe;resize:vertical}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:calc(88px + var(--safe-b));transform:translateX(-50%) translateY(10px);
+  background:#16202ee8;color:#fff;font-weight:700;font-size:14px;padding:11px 16px;border-radius:12px;z-index:60;
+  opacity:0;pointer-events:none;transition:.2s;max-width:86vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.namechips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.namechips button{height:38px;padding:0 14px;border-radius:999px;background:#f1f4f9;font-weight:700;font-size:14px}
+.pin-dots{font-size:13px;color:var(--muted);margin-top:6px}
+@media print{.fab,.tabs,.namebar,.icon-btn,.mask{display:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">🏓 C-PICK <small>참석·정산</small></div>
+    <span class="badge-sync" id="syncBadge">⚪ 연결 전</span>
+  </div>
+  <div class="namebar">
+    <label for="myName">내 이름</label>
+    <input id="myName" placeholder="이름을 넣으면 투표가 한 번에 돼요" maxlength="20" autocomplete="name">
+    <button class="icon-btn" id="btnName" title="이름 목록에서 고르기">👥</button>
+    <button class="icon-btn" id="btnSync" title="실시간 연결">🔗</button>
+    <button class="icon-btn" id="btnAdmin" title="관리자">🔒</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-tab="정기">📅 매일 정기 <span class="n" id="n-정기">0</span></button>
+  <button class="tab" data-tab="번개">⚡ 번개 모임 <span class="n" id="n-번개">0</span></button>
+  <button class="tab" data-tab="전체">📋 전체 <span class="n" id="n-전체">0</span></button>
+</nav>
+
+<main id="list"></main>
+
+<button class="fab" id="btnNew">＋ 새 모임</button>
+<div class="toast" id="toast"></div>
+
+<!-- 새 모임 / 수정 -->
+<div class="mask" id="maskEvent">
+  <div class="sheet">
+    <h2 id="evHead">새 모임 만들기</h2>
+    <div class="field">
+      <label>구분</label>
+      <div class="seg" id="evType">
+        <button type="button" data-type="정기" class="on">📅 매일 정기</button>
+        <button type="button" data-type="번개">⚡ 번개</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="evDate">날짜</label>
+      <input type="date" id="evDate">
+      <div class="chips" id="evDateChips">
+        <button type="button" data-d="0">오늘</button>
+        <button type="button" data-d="1">내일</button>
+        <button type="button" data-d="2">모레</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="evTime">시간</label>
+      <input type="time" id="evTime" value="19:00">
+    </div>
+    <div class="field">
+      <label for="evPlace">장소</label>
+      <input type="text" id="evPlace" placeholder="예) 송암 에어돔 1번코트" maxlength="80">
+    </div>
+    <div class="field">
+      <label for="evTitle">제목 / 메모 (비우면 '정기 모임')</label>
+      <input type="text" id="evTitle" maxlength="80" placeholder="예) 11월 4주 정기모임">
+    </div>
+    <div class="field" id="feeField" style="display:none">
+      <label for="evFee">총 사용료(원)</label>
+      <input type="number" id="evFee" inputmode="numeric" min="0" step="1000" placeholder="0">
+      <div class="chips" id="evFeeChips">
+        <button type="button" data-f="20000">2만원</button>
+        <button type="button" data-f="30000">3만원</button>
+        <button type="button" data-f="40000">4만원</button>
+        <button type="button" data-f="50000">5만원</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="evCancel">취소</button>
+      <button class="btn-primary" id="evSave">만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 이름 고르기 -->
+<div class="mask" id="maskName">
+  <div class="sheet">
+    <h2>내 이름</h2>
+    <div class="namechips" id="nameChips"></div>
+    <div class="field">
+      <label for="nameInput">이름 직접 입력</label>
+      <input type="text" id="nameInput" maxlength="20" placeholder="예) 이진홍">
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="nameCancel">취소</button>
+      <button class="btn-primary" id="nameSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 관리자 PIN -->
+<div class="mask" id="maskPin">
+  <div class="sheet">
+    <h2>🔒 관리자 모드</h2>
+    <div class="field">
+      <label for="pinInput">관리자 PIN</label>
+      <input type="password" id="pinInput" inputmode="numeric" maxlength="12" placeholder="PIN 4자리">
+    </div>
+    <div class="note">관리자만 모임을 마감하거나 지울 수 있어요.</div>
+    <div class="actions">
+      <button class="btn-ghost" id="pinCancel">취소</button>
+      <button class="btn-primary" id="pinOk">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 실시간 연결 -->
+<div class="mask" id="maskSync">
+  <div class="sheet">
+    <h2>🔗 실시간 연결</h2>
+    <div class="field">
+      <label for="syncInput">Apps Script 웹 앱 주소</label>
+      <input type="url" id="syncInput" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+    </div>
+    <div class="note">구글 시트에 붙인 Apps Script를 <b>웹 앱</b>으로 배포한 뒤 나오는 주소(.../exec)를 넣어 주세요.<br>
+      한 번 넣으면 이 기기에 기억되고, 동호회원 모두 같은 주소를 쓰면 실시간으로 함께 반영돼요.</div>
+    <div class="actions">
+      <button class="btn-ghost" id="syncCancel">닫기</button>
+      <button class="btn-primary" id="syncOk">연결</button>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="syncLocal">이 기기에만 저장(연결 안 함)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카톡 정산 문구 -->
+<div class="mask" id="maskCopy">
+  <div class="sheet">
+    <h2>📋 카톡 정산 문구</h2>
+    <textarea class="copyarea" id="copyText" spellcheck="false"></textarea>
+    <div class="note">복사가 안 되면 위 글자를 길게 눌러 '복사'하고 카톡방에 붙여넣으세요.</div>
+    <div class="actions">
+      <button class="btn-ghost" id="copyClose">닫기</button>
+      <button class="btn-primary" id="copyOk">복사</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   C-PICK 참석·번개 정산 — 웹 앱
+   ------------------------------------------------------------
+   ① 아래 DEFAULT_SYNC_URL 에 Apps Script 웹 앱 주소(.../exec)를 넣으면
+      앱을 열자마자 실시간으로 연결됩니다.
+   ② 비워 두면 앱 안 🔗 버튼으로 주소를 넣을 수 있어요(기기에 저장).
+   ③ 개인정보는 이름만 다룹니다. 전화번호·생년월일은 저장하지 않습니다.
+   ============================================================ */
+var DEFAULT_SYNC_URL = '';
+
+var K = { name: 'cpick.myName', url: 'cpick.syncUrl', local: 'cpick.localData', admin: 'cpick.adminOn' };
+var LOCAL_PIN = '0629';
+
+/* ---------- 작은 도구 ---------- */
+function $(s, r) { return (r || document).querySelector(s); }
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function won(n) { return Number(n || 0).toLocaleString('ko-KR'); }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function isoDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function todayISO() { return isoDate(new Date()); }
+function addDays(base, n) { var d = new Date(base.getFullYear(), base.getMonth(), base.getDate()); d.setDate(d.getDate() + n); return isoDate(d); }
+function parseISO(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+var DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+function dateLabel(iso) {
+  var d = parseISO(iso);
+  if (!d) return String(iso || '');
+  var t = todayISO();
+  var tag = iso === t ? '오늘 ' : (iso === addDays(new Date(), 1) ? '내일 ' : '');
+  return tag + (d.getMonth() + 1) + '/' + d.getDate() + '(' + DAYS[d.getDay()] + ')';
+}
+function timeLabel(t) { return /^\d{2}:\d{2}$/.test(String(t)) ? t : String(t || ''); }
+
+/* ---------- 1/N 정산 (10원 미만 절사) ---------- */
+function splitFee(fee, attendees, unit) {
+  var f = Math.max(0, Math.floor(Number(fee) || 0));
+  var n = Math.max(0, Math.floor(Number(attendees) || 0));
+  var u = Math.max(1, Math.floor(Number(unit) || 10));
+  var per = n > 0 ? Math.floor(f / n / u) * u : 0;
+  var total = per * n;
+  return { fee: f, attendees: n, unit: u, per: per, total: total, remainder: n > 0 ? f - total : 0 };
+}
+
+/* ---------- 모임 분류 ---------- */
+function groupEvents(events, tab, today) {
+  var list = (events || []).filter(function (e) { return !tab || tab === '전체' || e.type === tab; });
+  list.sort(function (a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')); });
+  var todayList = [], upcoming = [], past = [];
+  list.forEach(function (e) {
+    if (e.date === today) todayList.push(e);
+    else if (e.date > today) upcoming.push(e);
+    else past.push(e);
+  });
+  past.reverse();
+  return { today: todayList, upcoming: upcoming, past: past };
+}
+function attendeesOf(ev) { return (ev.votes || []).filter(function (v) { return v.status === '참석'; }); }
+function namesOf(ev, st) {
+  return (ev.votes || []).filter(function (v) { return v.status === st; }).map(function (v) { return v.name; });
+}
+
+/* ---------- 카톡 정산 문구 ---------- */
+function kakaoText(ev, unit) {
+  var att = attendeesOf(ev);
+  var s = splitFee(ev.fee, att.length, unit);
+  var lines = [];
+  lines.push('🏓 C-PICK ' + (ev.type === '번개' ? '번개 모임' : '정기 모임') + ' 정산');
+  if (ev.title && ev.title !== '정기 모임' && ev.title !== '번개 모임') lines.push('· ' + ev.title);
+  lines.push('📅 ' + dateLabel(ev.date) + ' ' + timeLabel(ev.time));
+  if (ev.place) lines.push('📍 ' + ev.place);
+  lines.push('💰 총 사용료 ' + won(s.fee) + '원');
+  lines.push('👥 참석 ' + s.attendees + '명');
+  if (s.attendees > 0) {
+    lines.push('👉 1인당 ' + won(s.per) + '원 (' + s.unit + '원 미만 절사)');
+    if (s.remainder > 0) lines.push('   (자투리 ' + won(s.remainder) + '원)');
+  } else {
+    lines.push('👉 아직 참석자가 없어요');
+  }
+  if (att.length) lines.push('참석: ' + att.map(function (v) { return v.name; }).join(', '));
+  var maybe = namesOf(ev, '미정');
+  if (maybe.length) lines.push('미정: ' + maybe.join(', '));
+  var no = namesOf(ev, '불참');
+  if (no.length) lines.push('불참: ' + no.join(', '));
+  return lines.join('\n');
+}
+
+/* ---------- 상태 ---------- */
+var state = { events: [], unit: 10, today: todayISO() };
+var myName = '';
+var adminPin = '';
+var tab = '정기';
+var syncUrl = '';
+var lastSyncOk = 0;
+var lastError = '';
+
+function myNameTrim() { return String(myName || '').trim(); }
+
+/* ---------- 로컬 모드(연결 전) ---------- */
+var Local = {
+  read: function () {
+    try {
+      var d = JSON.parse(localStorage.getItem(K.local) || 'null');
+      if (d && Array.isArray(d.events)) return d;
+    } catch (e) {}
+    return { events: [] };
+  },
+  write: function (d) { try { localStorage.setItem(K.local, JSON.stringify(d)); } catch (e) {} },
+  snapshot: function () {
+    var d = Local.read();
+    return { ok: true, events: d.events, unit: 10, today: todayISO(), serverTime: '' };
+  },
+  handle: function (action, body) {
+    var d = Local.read();
+    var now = new Date();
+    var stamp = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate()) + ' ' +
+      pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds());
+    var ev;
+    if (action === 'state') return Local.snapshot();
+    if (action === 'verifyPin') {
+      if (String(body.pin || '').trim() === LOCAL_PIN) return { ok: true, admin: true };
+      return { ok: false, error: 'PIN_MISMATCH' };
+    }
+    if (action === 'createEvent') {
+      var id = 'L' + now.getTime().toString(36);
+      d.events.push({
+        id: id, type: body.type === '번개' ? '번개' : '정기',
+        date: body.date || todayISO(), time: body.time || '19:00',
+        place: String(body.place || '').slice(0, 80),
+        title: String(body.title || '').slice(0, 80) || (body.type === '번개' ? '번개 모임' : '정기 모임'),
+        fee: Math.max(0, Math.floor(Number(body.fee) || 0)), status: '진행중',
+        createdAt: stamp, votes: []
+      });
+      Local.write(d);
+      return Local.snapshot();
+    }
+    ev = d.events.filter(function (x) { return x.id === body.eventId; })[0];
+    if (!ev) return { ok: false, error: 'NOT_FOUND' };
+    if (action === 'vote') {
+      var nm = String(body.name || '').trim().slice(0, 20);
+      if (!nm) return { ok: false, error: 'BAD_NAME' };
+      if (['참석', '미정', '불참'].indexOf(body.status) < 0) return { ok: false, error: 'BAD_STATUS' };
+      ev.votes = ev.votes || [];
+      var hit = ev.votes.filter(function (v) { return v.name === nm; })[0];
+      if (hit) { hit.status = body.status; hit.updatedAt = stamp; }
+      else ev.votes.push({ name: nm, status: body.status, note: '', updatedAt: stamp });
+      Local.write(d);
+      return Local.snapshot();
+    }
+    if (action === 'updateFee') {
+      ev.fee = Math.max(0, Math.floor(Number(body.fee) || 0));
+      Local.write(d);
+      return Local.snapshot();
+    }
+    if (action === 'toggleClose') {
+      if (String(body.pin || '').trim() !== LOCAL_PIN) return { ok: false, error: 'PIN_MISMATCH' };
+      ev.status = ev.status === '마감' ? '진행중' : '마감';
+      Local.write(d);
+      return Local.snapshot();
+    }
+    if (action === 'updateEvent') {
+      if (String(body.pin || '').trim() !== LOCAL_PIN) return { ok: false, error: 'PIN_MISMATCH' };
+      ['date', 'time', 'place', 'title'].forEach(function (k) { if (body[k] !== undefined) ev[k] = String(body[k]); });
+      if (body.type) ev.type = body.type;
+      if (body.fee !== undefined) ev.fee = Math.max(0, Math.floor(Number(body.fee) || 0));
+      Local.write(d);
+      return Local.snapshot();
+    }
+    if (action === 'deleteEvent') {
+      if (String(body.pin || '').trim() !== LOCAL_PIN) return { ok: false, error: 'PIN_MISMATCH' };
+      d.events = d.events.filter(function (x) { return x.id !== body.eventId; });
+      Local.write(d);
+      return Local.snapshot();
+    }
+    if (action === 'deletePast') {
+      if (String(body.pin || '').trim() !== LOCAL_PIN) return { ok: false, error: 'PIN_MISMATCH' };
+      var t = todayISO();
+      var before = d.events.length;
+      d.events = d.events.filter(function (x) { return !(x.date < t); });
+      Local.write(d);
+      var snap = Local.snapshot();
+      snap.deleted = before - d.events.length;
+      return snap;
+    }
+    return { ok: false, error: 'UNKNOWN_ACTION' };
+  }
+};
+
+/* ---------- 연결 ---------- */
+function resolveSync() {
+  var q = new URLSearchParams(location.search);
+  if (q.get('local') === '1') { try { localStorage.removeItem(K.url); } catch (e) {} syncUrl = ''; return; }
+  var fromQuery = q.get('sync');
+  if (fromQuery) {
+    syncUrl = fromQuery;
+    try { localStorage.setItem(K.url, fromQuery); } catch (e) {}
+    return;
+  }
+  var saved = '';
+  try { saved = localStorage.getItem(K.url) || ''; } catch (e) {}
+  syncUrl = saved || String(DEFAULT_SYNC_URL || '').trim();
+}
+function joining() { return syncUrl.indexOf('?') >= 0 ? '&' : '?'; }
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise(function (res, rej) { setTimeout(function () { rej(new Error('timeout')); }, ms); })]);
+}
+function apiGet(params) {
+  if (!syncUrl) return Promise.resolve(Local.handle('state', {}));
+  var qs = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+  var url = syncUrl + joining() + qs + '&_=' + Date.now();
+  return withTimeout(fetch(url, { cache: 'no-store', redirect: 'follow' }), 12000)
+    .then(function (r) { return r.json(); });
+}
+function apiPost(body) {
+  if (!syncUrl) return Promise.resolve(Local.handle(body.action, body));
+  return withTimeout(fetch(syncUrl, {
+    method: 'POST', redirect: 'follow', cache: 'no-store',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  }), 15000).then(function (r) { return r.json(); });
+}
+
+var ERR_MSG = {
+  PIN_MISMATCH: 'PIN이 맞지 않아요', NO_PIN: '시트 설정에 PIN이 없어요',
+  NOT_FOUND: '이미 지워진 모임이에요', BAD_NAME: '이름을 넣어 주세요',
+  BAD_STATUS: '상태를 다시 골라 주세요', BAD_DATE: '날짜를 확인해 주세요',
+  BAD_TIME: '시간을 확인해 주세요', BAD_TYPE: '구분을 확인해 주세요',
+  EVENT_CLOSED: '마감된 모임이에요', UNKNOWN_ACTION: '알 수 없는 요청',
+  SERVER_ERROR: '시트 연결에 문제가 있어요'
+};
+function errText(r) { return ERR_MSG[r && r.error] || ('오류: ' + ((r && r.error) || '알 수 없음')); }
+
+/* ---------- 토스트 ---------- */
+var toastTimer = null;
+function toast(msg) {
+  var t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2400);
+}
+
+/* ---------- 그리기 ---------- */
+function badge() {
+  var b = $('#syncBadge');
+  b.classList.remove('on', 'off');
+  if (!syncUrl) { b.textContent = '⚪ 이 기기에만 저장'; return; }
+  var age = Date.now() - lastSyncOk;
+  if (lastError && age > 12000) { b.textContent = '🔴 연결 끊김'; b.classList.add('off'); }
+  else if (lastSyncOk && age < 15000) { b.textContent = '🟢 실시간'; b.classList.add('on'); }
+  else { b.textContent = '🟡 연결 중…'; }
+}
+
+function voteBtnSt(ev, st) {
+  var me = (ev.votes || []).filter(function (v) { return v.name === myNameTrim(); })[0];
+  return me && me.status === st ? ' on' : '';
+}
+
+function cardHTML(ev) {
+  var att = namesOf(ev, '참석'), maybe = namesOf(ev, '미정'), no = namesOf(ev, '불참');
+  var closed = ev.status === '마감';
+  var me = myNameTrim();
+  var disabled = closed ? ' disabled' : '';
+  var names = '';
+  function nm(list, cls, label) {
+    if (!list.length) return '';
+    return '<div><span class="k ' + cls + '">' + label + ' ' + list.length + '</span> ' +
+      list.map(function (n) { return n === me ? '<span class="me">' + esc(n) + '</span>' : esc(n); }).join(', ') + '</div>';
+  }
+  names = nm(att, 'a', '참석') + nm(maybe, 'm', '미정') + nm(no, 'n', '불참');
+
+  var feeBox = '';
+  if (ev.type === '번개') {
+    var s = splitFee(ev.fee, att.length, state.unit);
+    var perTxt;
+    if (s.attendees === 0) perTxt = '<span class="per">—</span><span class="mul">참석 0명 · 아직 나눌 수 없어요</span>';
+    else perTxt = '<span class="per">' + won(s.per) + '원</span><span class="mul">× 참석 ' + s.attendees +
+      '명 = ' + won(s.total) + '원</span>';
+    feeBox =
+      '<div class="feebox">' +
+        '<div class="fee-top">' +
+          '<label>총 사용료</label>' +
+          '<input class="fee-input" type="number" inputmode="numeric" min="0" step="1000" value="' + (ev.fee || 0) + '" data-id="' + esc(ev.id) + '"' + (closed ? ' disabled' : '') + '>' +
+          '<button class="fee-save" data-id="' + esc(ev.id) + '"' + (closed ? ' disabled' : '') + '>저장</button>' +
+        '</div>' +
+        '<div class="perline">' + perTxt + '</div>' +
+        (s.remainder > 0 ? '<div class="rem">' + s.unit + '원 미만 절사 · 자투리 ' + won(s.remainder) + '원</div>' : '') +
+        '<button class="copy-btn" data-copy="' + esc(ev.id) + '">📋 카톡 정산 복사</button>' +
+      '</div>';
+  }
+
+  return '<article class="card' + (closed ? ' closed' : '') + '" data-id="' + esc(ev.id) + '">' +
+    '<div class="row1">' +
+      '<span class="tag ' + esc(ev.type) + '">' + (ev.type === '번개' ? '⚡ 번개' : '📅 정기') + '</span>' +
+      '<span class="when' + (ev.date === state.today ? ' today' : '') + '">' + esc(dateLabel(ev.date)) + ' ' + esc(timeLabel(ev.time)) + '</span>' +
+      (closed ? '<span class="state closed">마감</span>' : '') +
+    '</div>' +
+    '<h3 class="title">' + esc(ev.title || (ev.type === '번개' ? '번개 모임' : '정기 모임')) + '</h3>' +
+    (ev.place ? '<div class="meta">📍 ' + esc(ev.place) + '</div>' : '') +
+    '<div class="counts"><span>참석 <b class="a">' + att.length + '</b></span><span>미정 <b class="m">' + maybe.length + '</b></span><span>불참 <b class="n">' + no.length + '</b></span></div>' +
+    '<div class="votes">' +
+      '<button class="vote yes' + voteBtnSt(ev, '참석') + '" data-vote="' + esc(ev.id) + '" data-status="참석"' + disabled + '>✅ <span class="lb">참석</span></button>' +
+      '<button class="vote maybe' + voteBtnSt(ev, '미정') + '" data-vote="' + esc(ev.id) + '" data-status="미정"' + disabled + '>❓ <span class="lb">미정</span></button>' +
+      '<button class="vote no' + voteBtnSt(ev, '불참') + '" data-vote="' + esc(ev.id) + '" data-status="불참"' + disabled + '>❌ <span class="lb">불참</span></button>' +
+    '</div>' +
+    (names ? '<div class="names">' + names + '</div>' : '') +
+    feeBox +
+    '<div class="adminrow">' +
+      '<button data-close="' + esc(ev.id) + '">' + (closed ? '🔓 재개' : '🔒 마감') + '</button>' +
+      '<button data-edit="' + esc(ev.id) + '">✏️ 수정</button>' +
+      '<button class="danger" data-del="' + esc(ev.id) + '">🗑 삭제</button>' +
+    '</div>' +
+  '</article>';
+}
+
+function render() {
+  var g = groupEvents(state.events, tab, state.today);
+  $('#n-정기').textContent = state.events.filter(function (e) { return e.type === '정기'; }).length;
+  $('#n-번개').textContent = state.events.filter(function (e) { return e.type === '번개'; }).length;
+  $('#n-전체').textContent = state.events.length;
+
+  var pastCount = state.events.filter(function (e) { return e.date < state.today; }).length;
+  var html = '';
+  if (document.body.classList.contains('admin')) {
+    html += '<div class="admintools">' +
+      '<span>🔓 관리자 모드</span>' +
+      (pastCount ? '<button id="btnCleanPast">🧹 지난 모임 ' + pastCount + '개 정리</button>' : '') +
+      '<button id="btnAdminOff">나가기</button>' +
+    '</div>';
+  }
+  if (!state.events.length) {
+    html += '<div class="hint">아직 모임이 없어요.<br>아래 <b>＋ 새 모임</b>으로 오늘 정기 모임을 만들고,<br>' +
+      '이름을 넣고 <b>✅ 참석</b>만 누르면 돼요.</div>';
+  } else {
+    if (g.today.length) html += '<div class="sec">오늘</div>' + g.today.map(cardHTML).join('');
+    if (g.upcoming.length) html += '<div class="sec">예정</div>' + g.upcoming.map(cardHTML).join('');
+    if (g.past.length) html += '<div class="sec">지난 모임</div>' + g.past.slice(0, 10).map(cardHTML).join('');
+    if (!g.today.length && !g.upcoming.length && !g.past.length) {
+      html += '<div class="hint">이 탭에는 아직 모임이 없어요.</div>';
+    }
+  }
+  $('#list').innerHTML = html;
+  badge();
+}
+
+/* ---------- 상태 반영 ---------- */
+function applyState(r) {
+  if (!r || r.ok !== true) return false;
+  if (Array.isArray(r.events)) state.events = r.events;
+  if (r.unit) state.unit = r.unit;
+  if (r.today) state.today = r.today;
+  return true;
+}
+
+var refreshing = false;
+function refresh(silent) {
+  if (refreshing) return Promise.resolve();
+  refreshing = true;
+  return apiGet({ action: 'state' }).then(function (r) {
+    if (applyState(r)) {
+      lastSyncOk = Date.now(); lastError = '';
+      render();
+    } else {
+      lastError = (r && r.error) || 'bad';
+      badge();
+      if (!silent) toast(errText(r));
+    }
+  }).catch(function (e) {
+    lastError = String(e && e.message || e);
+    badge();
+  }).then(function () { refreshing = false; badge(); });
+}
+
+function act(body) {
+  return apiPost(body).then(function (r) {
+    if (r && r.ok) {
+      applyState(r);
+      lastSyncOk = Date.now(); lastError = '';
+      render();
+    } else {
+      toast(errText(r));
+    }
+    return r;
+  }).catch(function (e) {
+    lastError = String(e && e.message || e);
+    badge();
+    toast('연결이 잠시 끊겼어요. 다시 눌러 주세요.');
+    return { ok: false, error: 'NETWORK' };
+  });
+}
+
+/* ---------- 모달 ---------- */
+function openMask(id) { $('#' + id).classList.add('on'); }
+function closeMask(id) { $('#' + id).classList.remove('on'); }
+$$('.mask').forEach(function (m) {
+  m.addEventListener('click', function (e) { if (e.target === m) m.classList.remove('on'); });
+});
+
+/* ---------- 이벤트 만들기/수정 ---------- */
+var editId = null;
+function openEventSheet(ev) {
+  editId = ev ? ev.id : null;
+  $('#evHead').textContent = ev ? '모임 수정' : '새 모임 만들기';
+  $('#evSave').textContent = ev ? '저장' : '만들기';
+  var type = ev ? ev.type : (tab === '번개' ? '번개' : '정기');
+  $$('#evType button').forEach(function (b) { b.classList.toggle('on', b.dataset.type === type); });
+  $('#evDate').value = ev ? ev.date : todayISO();
+  $('#evTime').value = ev ? ev.time : '19:00';
+  $('#evPlace').value = ev ? ev.place : '';
+  $('#evTitle').value = ev ? ev.title : '';
+  $('#evFee').value = ev ? (ev.fee || '') : '';
+  feeFieldToggle();
+  openMask('maskEvent');
+}
+function feeFieldToggle() {
+  var t = ($('#evType .on') || {}).dataset ? $('#evType .on').dataset.type : '정기';
+  $('#feeField').style.display = t === '번개' ? '' : 'none';
+}
+$('#evType').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-type]');
+  if (!b) return;
+  $$('#evType button').forEach(function (x) { x.classList.toggle('on', x === b); });
+  feeFieldToggle();
+});
+$('#evDateChips').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-d]');
+  if (!b) return;
+  $('#evDate').value = addDays(new Date(), Number(b.dataset.d));
+});
+$('#evFeeChips').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-f]');
+  if (!b) return;
+  $('#evFee').value = b.dataset.f;
+});
+$('#evCancel').addEventListener('click', function () { closeMask('maskEvent'); });
+$('#btnNew').addEventListener('click', function () { openEventSheet(null); });
+$('#evSave').addEventListener('click', function () {
+  var type = $('#evType .on').dataset.type;
+  var body = {
+    action: editId ? 'updateEvent' : 'createEvent',
+    type: type,
+    date: $('#evDate').value || todayISO(),
+    time: $('#evTime').value || '19:00',
+    place: $('#evPlace').value.trim(),
+    title: $('#evTitle').value.trim(),
+    fee: type === '번개' ? (Number($('#evFee').value) || 0) : 0
+  };
+  if (editId) { body.eventId = editId; body.pin = adminPin; body.fee = Number($('#evFee').value) || 0; }
+  var btn = $('#evSave');
+  btn.disabled = true;
+  act(body).then(function (r) {
+    btn.disabled = false;
+    if (r && r.ok) {
+      closeMask('maskEvent');
+      toast(editId ? '모임을 고쳤어요' : '모임을 만들었어요');
+      editId = null;
+    }
+  });
+});
+
+/* ---------- 목록 클릭 ---------- */
+$('#list').addEventListener('click', function (e) {
+  var v = e.target.closest('button[data-vote]');
+  if (v) { doVote(v.dataset.vote, v.dataset.status); return; }
+  var save = e.target.closest('button.fee-save');
+  if (save) { saveFee(save.dataset.id); return; }
+  var cp = e.target.closest('button[data-copy]');
+  if (cp) { showCopy(cp.dataset.copy); return; }
+  var cl = e.target.closest('button[data-close]');
+  if (cl) { adminToggle(cl.dataset.close); return; }
+  var del = e.target.closest('button[data-del]');
+  if (del) { adminDelete(del.dataset.del); return; }
+  var ed = e.target.closest('button[data-edit]');
+  if (ed) {
+    var ev = state.events.filter(function (x) { return x.id === ed.dataset.edit; })[0];
+    if (ev) openEventSheet(ev);
+    return;
+  }
+});
+$('#list').addEventListener('click', function (e) {
+  if (e.target.id === 'btnCleanPast') { adminDeletePast(); return; }
+  if (e.target.id === 'btnAdminOff') { adminPin = ''; setAdmin(false); render(); toast('관리자 모드에서 나왔어요'); }
+});
+$('#list').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('fee-input')) {
+    saveFee(e.target.dataset.id);
+  }
+});
+
+function doVote(id, status) {
+  if (!myNameTrim()) {
+    toast('먼저 내 이름을 넣어 주세요');
+    $('#myName').focus();
+    openNameSheet();
+    return;
+  }
+  var ev = state.events.filter(function (x) { return x.id === id; })[0];
+  if (ev && ev.status === '마감') { toast('마감된 모임이에요'); return; }
+  /* 누르자마자 내 화면부터 바뀌게(응답 기다리지 않음) */
+  if (ev) {
+    ev.votes = ev.votes || [];
+    var hit = ev.votes.filter(function (x) { return x.name === myNameTrim(); })[0];
+    if (hit) hit.status = status; else ev.votes.push({ name: myNameTrim(), status: status, note: '', updatedAt: '' });
+    render();
+  }
+  act({ action: 'vote', eventId: id, name: myNameTrim(), status: status }).then(function (r) {
+    if (r && r.ok) toast(status === '참석' ? '✅ 참석으로 담았어요' : (status === '미정' ? '❓ 미정으로 담았어요' : '❌ 불참으로 담았어요'));
+    else refresh(true);
+  });
+}
+
+function saveFee(id) {
+  var inp = $$('input.fee-input').filter(function (x) { return x.dataset.id === id; })[0];
+  var fee = inp ? Math.max(0, Number(inp.value) || 0) : 0;
+  act({ action: 'updateFee', eventId: id, fee: fee }).then(function (r) {
+    if (r && r.ok) toast('총 사용료 ' + won(fee) + '원으로 저장했어요');
+  });
+}
+
+function showCopy(id) {
+  var ev = state.events.filter(function (x) { return x.id === id; })[0];
+  if (!ev) return;
+  var txt = kakaoText(ev, state.unit);
+  $('#copyText').value = txt;
+  openMask('maskCopy');
+  copyToClipboard(txt).then(function (okCopy) {
+    toast(okCopy ? '정산 문구를 복사했어요 — 카톡방에 붙여넣기!' : '아래 글자를 길게 눌러 복사해 주세요');
+  });
+}
+function copyToClipboard(txt) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(txt).then(function () { return true; }).catch(function () { return legacyCopy(txt); });
+  }
+  return Promise.resolve(legacyCopy(txt));
+}
+function legacyCopy(txt) {
+  try {
+    var ta = $('#copyText');
+    ta.focus(); ta.select();
+    var ok = document.execCommand && document.execCommand('copy');
+    ta.setSelectionRange(0, 0);
+    return !!ok;
+  } catch (e) { return false; }
+}
+$('#copyOk').addEventListener('click', function () {
+  copyToClipboard($('#copyText').value).then(function (okCopy) {
+    toast(okCopy ? '복사했어요' : '길게 눌러 복사해 주세요');
+  });
+});
+$('#copyClose').addEventListener('click', function () { closeMask('maskCopy'); });
+
+/* ---------- 관리자 ---------- */
+function setAdmin(on) {
+  document.body.classList.toggle('admin', on);
+  $('#btnAdmin').classList.toggle('active', on);
+  $('#btnAdmin').textContent = on ? '🔓' : '🔒';
+}
+$('#btnAdmin').addEventListener('click', function () {
+  if (document.body.classList.contains('admin')) {
+    ensureAdmin().then(function () { refresh(true); });
+    return;
+  }
+  $('#pinInput').value = '';
+  openMask('maskPin');
+  setTimeout(function () { $('#pinInput').focus(); }, 120);
+});
+$('#pinCancel').addEventListener('click', function () { closeMask('maskPin'); });
+$('#pinOk').addEventListener('click', submitPin);
+$('#pinInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') submitPin(); });
+function submitPin() {
+  var pin = $('#pinInput').value.trim();
+  if (!pin) { toast('PIN을 넣어 주세요'); return; }
+  apiPost({ action: 'verifyPin', pin: pin }).then(function (r) {
+    if (r && r.ok) {
+      adminPin = pin; setAdmin(true); closeMask('maskPin');
+      toast('관리자 모드예요 — 마감·삭제 버튼이 보여요');
+      render();
+    } else {
+      toast(errText(r));
+    }
+  }).catch(function () { toast('연결이 잠시 끊겼어요'); });
+}
+function ensureAdmin() {
+  if (document.body.classList.contains('admin')) return Promise.resolve(true);
+  openMask('maskPin');
+  return Promise.resolve(false);
+}
+function adminToggle(id) {
+  act({ action: 'toggleClose', eventId: id, pin: adminPin }).then(function (r) {
+    if (!r || !r.ok) return;
+    var now = (r.events || []).filter(function (e) { return e.id === id; })[0];
+    toast(now && now.status === '마감' ? '모임을 마감했어요' : '모임을 다시 열었어요');
+  });
+}
+function adminDelete(id) {
+  var ev = state.events.filter(function (x) { return x.id === id; })[0];
+  if (!confirm('이 모임을 지울까요?\n' + (ev ? ev.title + ' · ' + dateLabel(ev.date) : '') + '\n(참석 기록도 함께 지워집니다)')) return;
+  act({ action: 'deleteEvent', eventId: id, pin: adminPin }).then(function (r) {
+    if (r && r.ok) toast('모임을 지웠어요');
+  });
+}
+function adminDeletePast() {
+  act({ action: 'deletePast', pin: adminPin }).then(function (r) {
+    if (r && r.ok) toast((r.deleted || 0) + '개 지난 모임을 정리했어요');
+  });
+}
+
+/* ---------- 이름 ---------- */
+function allNames() {
+  var set = {};
+  state.events.forEach(function (e) {
+    (e.votes || []).forEach(function (v) { if (v.name) set[v.name] = 1; });
+  });
+  return Object.keys(set).slice(0, 30);
+}
+function openNameSheet() {
+  var names = allNames();
+  $('#nameChips').innerHTML = names.length
+    ? names.map(function (n) { return '<button type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>'; }).join('')
+    : '<span class="note">아직 저장된 이름이 없어요.</span>';
+  $('#nameInput').value = myNameTrim();
+  openMask('maskName');
+  setTimeout(function () { $('#nameInput').focus(); }, 100);
+}
+$('#btnName').addEventListener('click', openNameSheet);
+$('#nameChips').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-n]');
+  if (!b) return;
+  setMyName(b.dataset.n);
+  closeMask('maskName');
+  toast('내 이름: ' + myNameTrim());
+});
+$('#nameSave').addEventListener('click', function () {
+  setMyName($('#nameInput').value);
+  closeMask('maskName');
+  if (myNameTrim()) toast('내 이름: ' + myNameTrim());
+});
+$('#nameCancel').addEventListener('click', function () { closeMask('maskName'); });
+function setMyName(n) {
+  myName = String(n || '').slice(0, 20);
+  $('#myName').value = myName;
+  try { localStorage.setItem(K.name, myName); } catch (e) {}
+  render();
+}
+$('#myName').addEventListener('input', function () {
+  myName = $('#myName').value.slice(0, 20);
+  try { localStorage.setItem(K.name, myName); } catch (e) {}
+  render();
+});
+
+/* ---------- 탭 ---------- */
+$('#tabs').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-tab]');
+  if (!b) return;
+  tab = b.dataset.tab;
+  $$('#tabs .tab').forEach(function (x) { x.classList.toggle('on', x === b); });
+  render();
+});
+
+/* ---------- 연결 ---------- */
+$('#btnSync').addEventListener('click', function () {
+  $('#syncInput').value = syncUrl || '';
+  openMask('maskSync');
+});
+$('#syncCancel').addEventListener('click', function () { closeMask('maskSync'); });
+$('#syncLocal').addEventListener('click', function () {
+  syncUrl = '';
+  try { localStorage.removeItem(K.url); } catch (e) {}
+  closeMask('maskSync');
+  badge(); refresh(true);
+  toast('이 기기에만 저장해요');
+});
+$('#syncOk').addEventListener('click', function () {
+  var url = $('#syncInput').value.trim();
+  if (!/^https?:\/\//.test(url) && url.charAt(0) !== '/') { toast('https://… 로 시작하는 주소를 넣어 주세요'); return; }
+  var btn = $('#syncOk');
+  btn.disabled = true; btn.textContent = '확인 중…';
+  var probe = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=ping&_=' + Date.now();
+  withTimeout(fetch(probe, { cache: 'no-store', redirect: 'follow' }), 15000)
+    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      btn.disabled = false; btn.textContent = '연결';
+      if (!r || r.ok !== true) { toast('연결에 실패했어요: ' + ((r && r.error) || '응답 없음')); return; }
+      syncUrl = url;
+      try { localStorage.setItem(K.url, url); } catch (e) {}
+      closeMask('maskSync');
+      lastSyncOk = 0;
+      toast('연결됐어요 · ' + (r.sheetTitle || 'C-PICK 시트'));
+      refresh(true);
+    })
+    .catch(function () {
+      btn.disabled = false; btn.textContent = '연결';
+      toast('주소를 확인해 주세요(웹 앱 배포 주소여야 해요)');
+    });
+});
+
+/* ---------- 시작 ---------- */
+(function init() {
+  resolveSync();
+  try { myName = localStorage.getItem(K.name) || ''; } catch (e) { myName = ''; }
+  $('#myName').value = myName;
+  setAdmin(false);
+  render();
+  refresh(true);
+  setInterval(function () {
+    if (document.hidden) return;
+    refresh(true);
+  }, 4000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    });
+  }
+})();
+
+/* 테스트에서 쓰는 작은 공개 창구 */
+window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won };
+</script>
+</body>
+</html>
