@@ -625,7 +625,12 @@ function cardHTML(ev) {
   '</article>';
 }
 
+var pendingRender = false;
 function render() {
+  /* 4초 자동 새로고침이 사용자가 치고 있는 금액 칸을 지우지 않도록 잠깐 미룬다 */
+  var ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT' && $('#list').contains(ae)) { pendingRender = true; badge(); return; }
+  pendingRender = false;
   var g = groupEvents(state.events, tab, state.today);
   $('#n-정기').textContent = state.events.filter(function (e) { return e.type === '정기'; }).length;
   $('#n-번개').textContent = state.events.filter(function (e) { return e.type === '번개'; }).length;
@@ -654,6 +659,10 @@ function render() {
   $('#list').innerHTML = html;
   badge();
 }
+
+document.addEventListener('focusout', function () {
+  if (pendingRender) setTimeout(function () { if (pendingRender) render(); }, 300);
+});
 
 /* ---------- 상태 반영 ---------- */
 function applyState(r) {
@@ -1019,6 +1028,7 @@ $('#syncOk').addEventListener('click', function () {
     refresh(true);
   }, 4000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
+  setInterval(badge, 1000);   /* 연결 상태 표시는 1초마다 다시 계산 */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('./sw.js').catch(function () {});

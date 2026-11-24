@@ -289,6 +289,16 @@ def main():
         ok("3만원 자투리 40원 표시", "자투리 40원" in page.inner_text(".feebox"), page.inner_text(".feebox")[:300])
         page.screenshot(path=os.path.join(SHOTS, "cpick-att-mobile-list.png"))
 
+        # ---------- 금액 칸에 치는 동안 자동 새로고침이 값을 지우지 않는지 ----------
+        page.fill(".fee-input", "45000")
+        page.focus(".fee-input")
+        page.wait_for_timeout(4600)
+        ok("금액 입력 중 4초 새로고침이 값을 지우지 않음", page.input_value(".fee-input") == "45000",
+           page.input_value(".fee-input"))
+        page.fill(".fee-input", "30000")
+        page.click(".fee-save")
+        page.wait_for_timeout(4500)
+
         # ---------- 카톡 정산 복사 ----------
         page.click(".copy-btn")
         page.wait_for_selector("#maskCopy.on")
