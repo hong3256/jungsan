@@ -290,6 +290,20 @@ def main():
            [page2.input_value("#evTitle"), page2.input_value("#evHost")])
         page2.close()
 
+        # ---------- 수정에서 주최자 지우기 → 표시·시트에서도 사라짐 ----------
+        named = card_by_title(page, "수요일 번개게임")
+        named.locator("button[data-edit]").click()
+        page.wait_for_selector("#maskEvent.on")
+        page.fill("#evHost", "")
+        page.click("#evSave")
+        page.wait_for_timeout(500)
+        named = card_by_title(page, "수요일 번개게임")
+        ok("수정에서 주최자를 지우면 주최 줄 사라짐",
+           named is not None and named.locator(".host").count() == 0,
+           named.inner_text()[:200] if named else None)
+        ok("주최자를 지우면 시트 제목도 태그 없이", sheet_title(page, game_id) == "수요일 번개게임",
+           sheet_title(page, game_id))
+
         # ---------- 콘솔 오류 ----------
         real_errors = [e for e in console_errors if "favicon" not in e.lower()]
         ok("콘솔 오류 0건", len(real_errors) == 0, real_errors[:5])
