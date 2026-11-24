@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>C-PICK 참석·정산</title>
+<title>진홍이가 만든 참석앱</title>
 <meta name="theme-color" content="#12335f">
-<meta name="description" content="C-PICK 피클볼 동호회 — 매일 참석 투표와 번개 모임 1/N 정산(10원 미만 절사)">
+<meta name="description" content="C-PICK 피클볼 동호회 — 번개게임·번개회식 참석 투표와 1/N 정산(10원 미만 절사)">
 <meta name="robots" content="noindex, nofollow">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="C-PICK 참석">
-<meta name="application-name" content="C-PICK 참석">
+<meta name="apple-mobile-web-app-title" content="진홍이가 만든 참석앱">
+<meta name="application-name" content="진홍이가 만든 참석앱">
 <meta name="format-detection" content="telephone=no">
 <style>
 :root{
@@ -58,8 +58,8 @@ h1,h2,h3,p{margin:0}
 /* ---------- 탭 ---------- */
 .tabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px 10px;background:#fff;
   border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(18,51,95,.06)}
-.tab{flex:1 1 0;height:42px;border-radius:12px;font-weight:700;font-size:14px;color:var(--muted);
-  background:#f1f4f9;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab{flex:1 1 0;min-width:0;height:42px;border-radius:12px;font-weight:700;font-size:13px;color:var(--muted);
+  background:#f1f4f9;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 4px;white-space:nowrap}
 .tab.on{background:var(--navy);color:#fff}
 .tab .n{font-size:12px;font-weight:700;background:rgba(0,0,0,.08);color:inherit;border-radius:999px;padding:1px 7px}
 .tab.on .n{background:rgba(255,255,255,.22)}
@@ -166,7 +166,7 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
 
 <header class="top">
   <div class="top-row">
-    <div class="brand">🏓 C-PICK <small>참석·정산</small></div>
+    <div class="brand">🏓 진홍이가 만든 참석앱</div>
     <span class="badge-sync" id="syncBadge">⚪ 연결 전</span>
   </div>
   <div class="namebar">
@@ -179,8 +179,8 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
 </header>
 
 <nav class="tabs" id="tabs">
-  <button class="tab on" data-tab="정기">📅 매일 정기 <span class="n" id="n-정기">0</span></button>
-  <button class="tab" data-tab="번개">⚡ 번개 모임 <span class="n" id="n-번개">0</span></button>
+  <button class="tab on" data-tab="정기">🏓 번개게임 <span class="n" id="n-정기">0</span></button>
+  <button class="tab" data-tab="번개">🍻 번개회식 <span class="n" id="n-번개">0</span></button>
   <button class="tab" data-tab="전체">📋 전체 <span class="n" id="n-전체">0</span></button>
 </nav>
 
@@ -196,8 +196,8 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
     <div class="field">
       <label>구분</label>
       <div class="seg" id="evType">
-        <button type="button" data-type="정기" class="on">📅 매일 정기</button>
-        <button type="button" data-type="번개">⚡ 번개</button>
+        <button type="button" data-type="정기" class="on">🏓 번개게임</button>
+        <button type="button" data-type="번개">🍻 번개회식</button>
       </div>
     </div>
     <div class="field">
@@ -218,10 +218,10 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
       <input type="text" id="evPlace" placeholder="예) 송암 에어돔 1번코트" maxlength="80">
     </div>
     <div class="field">
-      <label for="evTitle">제목 / 메모 (비우면 '정기 모임')</label>
-      <input type="text" id="evTitle" maxlength="80" placeholder="예) 11월 4주 정기모임">
+      <label for="evTitle" id="evTitleLabel">제목 / 메모 (비우면 '번개게임')</label>
+      <input type="text" id="evTitle" maxlength="80" placeholder="예) 화요일 번개게임">
     </div>
-    <div class="field" id="feeField" style="display:none">
+    <div class="field" id="feeField">
       <label for="evFee">총 사용료(원)</label>
       <input type="number" id="evFee" inputmode="numeric" min="0" step="1000" placeholder="0">
       <div class="chips" id="evFeeChips">
@@ -230,6 +230,7 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
         <button type="button" data-f="40000">4만원</button>
         <button type="button" data-f="50000">5만원</button>
       </div>
+      <div class="note">모르면 0원으로 두고, 끝난 뒤 카드에서 금액만 넣고 저장해도 돼요.</div>
     </div>
     <div class="actions">
       <button class="btn-ghost" id="evCancel">취소</button>
@@ -305,7 +306,7 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
 
 <script>
 /* ============================================================
-   C-PICK 참석·번개 정산 — 웹 앱
+   C-PICK 참석·정산(번개게임 · 번개회식) — 웹 앱
    ------------------------------------------------------------
    ① 아래 DEFAULT_SYNC_URL 에 Apps Script 웹 앱 주소(.../exec)를 넣으면
       앱을 열자마자 실시간으로 연결됩니다.
@@ -344,6 +345,22 @@ function dateLabel(iso) {
 }
 function timeLabel(t) { return /^\d{2}:\d{2}$/.test(String(t)) ? t : String(t || ''); }
 
+/* ---------- 화면 명칭 ----------
+   서버(이미 배포된 Apps Script)는 type 을 '정기' / '번개' 로만 받으므로
+   통신 값은 그대로 두고, 화면에 보이는 문구만 바꾼다.
+     '정기'  → 🏓 번개게임
+     '번개'  → 🍻 번개회식                                                        */
+var TYPE_LABEL = { '정기': '번개게임', '번개': '번개회식' };
+var TYPE_EMOJI = { '정기': '🏓', '번개': '🍻' };
+var LEGACY_TITLES = ['정기 모임', '번개 모임'];   /* 예전 기본 제목(시트에 이미 저장된 값) */
+function typeLabel(t) { return TYPE_LABEL[t] || TYPE_LABEL['정기']; }
+function typeEmoji(t) { return TYPE_EMOJI[t] || TYPE_EMOJI['정기']; }
+function displayTitle(ev) {
+  var t = String((ev && ev.title) || '').trim();
+  if (!t || LEGACY_TITLES.indexOf(t) >= 0) return typeLabel(ev && ev.type);
+  return t;
+}
+
 /* ---------- 1/N 정산 (10원 미만 절사) ---------- */
 function splitFee(fee, attendees, unit) {
   var f = Math.max(0, Math.floor(Number(fee) || 0));
@@ -377,8 +394,9 @@ function kakaoText(ev, unit) {
   var att = attendeesOf(ev);
   var s = splitFee(ev.fee, att.length, unit);
   var lines = [];
-  lines.push('🏓 C-PICK ' + (ev.type === '번개' ? '번개 모임' : '정기 모임') + ' 정산');
-  if (ev.title && ev.title !== '정기 모임' && ev.title !== '번개 모임') lines.push('· ' + ev.title);
+  lines.push(typeEmoji(ev.type) + ' C-PICK ' + typeLabel(ev.type) + ' 정산');
+  var title = displayTitle(ev);
+  if (title !== typeLabel(ev.type)) lines.push('· ' + title);
   lines.push('📅 ' + dateLabel(ev.date) + ' ' + timeLabel(ev.time));
   if (ev.place) lines.push('📍 ' + ev.place);
   lines.push('💰 총 사용료 ' + won(s.fee) + '원');
@@ -439,7 +457,7 @@ var Local = {
         id: id, type: body.type === '번개' ? '번개' : '정기',
         date: body.date || todayISO(), time: body.time || '19:00',
         place: String(body.place || '').slice(0, 80),
-        title: String(body.title || '').slice(0, 80) || (body.type === '번개' ? '번개 모임' : '정기 모임'),
+        title: String(body.title || '').slice(0, 80) || (body.type === '번개' ? '번개회식' : '번개게임'),
         fee: Math.max(0, Math.floor(Number(body.fee) || 0)), status: '진행중',
         createdAt: stamp, votes: []
       });
@@ -582,7 +600,7 @@ function cardHTML(ev) {
   names = nm(att, 'a', '참석') + nm(maybe, 'm', '미정') + nm(no, 'n', '불참');
 
   var feeBox = '';
-  if (ev.type === '번개') {
+  {
     var s = splitFee(ev.fee, att.length, state.unit);
     var perTxt;
     if (s.attendees === 0) perTxt = '<span class="per">—</span><span class="mul">참석 0명 · 아직 나눌 수 없어요</span>';
@@ -603,11 +621,11 @@ function cardHTML(ev) {
 
   return '<article class="card' + (closed ? ' closed' : '') + '" data-id="' + esc(ev.id) + '">' +
     '<div class="row1">' +
-      '<span class="tag ' + esc(ev.type) + '">' + (ev.type === '번개' ? '⚡ 번개' : '📅 정기') + '</span>' +
+      '<span class="tag ' + esc(ev.type) + '">' + typeEmoji(ev.type) + ' ' + typeLabel(ev.type) + '</span>' +
       '<span class="when' + (ev.date === state.today ? ' today' : '') + '">' + esc(dateLabel(ev.date)) + ' ' + esc(timeLabel(ev.time)) + '</span>' +
       (closed ? '<span class="state closed">마감</span>' : '') +
     '</div>' +
-    '<h3 class="title">' + esc(ev.title || (ev.type === '번개' ? '번개 모임' : '정기 모임')) + '</h3>' +
+    '<h3 class="title">' + esc(displayTitle(ev)) + '</h3>' +
     (ev.place ? '<div class="meta">📍 ' + esc(ev.place) + '</div>' : '') +
     '<div class="counts"><span>참석 <b class="a">' + att.length + '</b></span><span>미정 <b class="m">' + maybe.length + '</b></span><span>불참 <b class="n">' + no.length + '</b></span></div>' +
     '<div class="votes">' +
@@ -642,11 +660,12 @@ function render() {
     html += '<div class="admintools">' +
       '<span>🔓 관리자 모드</span>' +
       (pastCount ? '<button id="btnCleanPast">🧹 지난 모임 ' + pastCount + '개 정리</button>' : '') +
+      (state.events.length ? '<button id="btnWipeAll">🗑️ 모두 지우기</button>' : '') +
       '<button id="btnAdminOff">나가기</button>' +
     '</div>';
   }
   if (!state.events.length) {
-    html += '<div class="hint">아직 모임이 없어요.<br>아래 <b>＋ 새 모임</b>으로 오늘 정기 모임을 만들고,<br>' +
+    html += '<div class="hint">아직 모임이 없어요.<br>아래 <b>＋ 새 모임</b>으로 번개게임·번개회식을 만들고,<br>' +
       '이름을 넣고 <b>✅ 참석</b>만 누르면 돼요.</div>';
   } else {
     if (g.today.length) html += '<div class="sec">오늘</div>' + g.today.map(cardHTML).join('');
@@ -730,18 +749,22 @@ function openEventSheet(ev) {
   $('#evPlace').value = ev ? ev.place : '';
   $('#evTitle').value = ev ? ev.title : '';
   $('#evFee').value = ev ? (ev.fee || '') : '';
-  feeFieldToggle();
+  syncTypeUI();
   openMask('maskEvent');
 }
-function feeFieldToggle() {
-  var t = ($('#evType .on') || {}).dataset ? $('#evType .on').dataset.type : '정기';
-  $('#feeField').style.display = t === '번개' ? '' : 'none';
+/* 구분을 바꿀 때마다 제목 안내만 바꾼다. 총 사용료 칸은 번개게임·번개회식 모두 항상 보인다. */
+function syncTypeUI() {
+  var on = $('#evType .on');
+  var t = on && on.dataset ? on.dataset.type : '정기';
+  $('#feeField').style.display = '';
+  $('#evTitleLabel').textContent = "제목 / 메모 (비우면 '" + typeLabel(t) + "')";
+  $('#evTitle').placeholder = '예) ' + (t === '번개' ? '삼겹살 번개회식' : '화요일 번개게임');
 }
 $('#evType').addEventListener('click', function (e) {
   var b = e.target.closest('button[data-type]');
   if (!b) return;
   $$('#evType button').forEach(function (x) { x.classList.toggle('on', x === b); });
-  feeFieldToggle();
+  syncTypeUI();
 });
 $('#evDateChips').addEventListener('click', function (e) {
   var b = e.target.closest('button[data-d]');
@@ -764,9 +787,9 @@ $('#evSave').addEventListener('click', function () {
     time: $('#evTime').value || '19:00',
     place: $('#evPlace').value.trim(),
     title: $('#evTitle').value.trim(),
-    fee: type === '번개' ? (Number($('#evFee').value) || 0) : 0
+    fee: Math.max(0, Number($('#evFee').value) || 0)
   };
-  if (editId) { body.eventId = editId; body.pin = adminPin; body.fee = Number($('#evFee').value) || 0; }
+  if (editId) { body.eventId = editId; body.pin = adminPin; }
   var btn = $('#evSave');
   btn.disabled = true;
   act(body).then(function (r) {
@@ -800,6 +823,7 @@ $('#list').addEventListener('click', function (e) {
 });
 $('#list').addEventListener('click', function (e) {
   if (e.target.id === 'btnCleanPast') { adminDeletePast(); return; }
+  if (e.target.id === 'btnWipeAll') { adminWipeAll(); return; }
   if (e.target.id === 'btnAdminOff') { adminPin = ''; setAdmin(false); render(); toast('관리자 모드에서 나왔어요'); }
 });
 $('#list').addEventListener('keydown', function (e) {
@@ -915,7 +939,7 @@ function adminToggle(id) {
 }
 function adminDelete(id) {
   var ev = state.events.filter(function (x) { return x.id === id; })[0];
-  if (!confirm('이 모임을 지울까요?\n' + (ev ? ev.title + ' · ' + dateLabel(ev.date) : '') + '\n(참석 기록도 함께 지워집니다)')) return;
+  if (!confirm('이 모임을 지울까요?\n' + (ev ? displayTitle(ev) + ' · ' + dateLabel(ev.date) : '') + '\n(참석 기록도 함께 지워집니다)')) return;
   act({ action: 'deleteEvent', eventId: id, pin: adminPin }).then(function (r) {
     if (r && r.ok) toast('모임을 지웠어요');
   });
@@ -924,6 +948,41 @@ function adminDeletePast() {
   act({ action: 'deletePast', pin: adminPin }).then(function (r) {
     if (r && r.ok) toast((r.deleted || 0) + '개 지난 모임을 정리했어요');
   });
+}
+/* 모두 지우기 — 관리자 전용.
+   이미 배포된 Apps Script 에 '전체 삭제' 명령이 없어도 되도록,
+   기존 deleteEvent(모임ID + PIN)를 하나씩 순서대로 호출해 전부 지운다. */
+function adminWipeAll() {
+  var ids = state.events.map(function (e) { return e.id; });
+  if (!ids.length) { toast('지울 모임이 없어요'); return; }
+  if (!confirm('모든 모임과 참석 기록을 삭제할까요?\n(' + ids.length + '개 · 되돌릴 수 없어요)')) return;
+
+  var btn = $('#btnWipeAll');
+  if (btn) { btn.disabled = true; btn.textContent = '지우는 중…'; }
+  var i = 0, failed = 0;
+  function step() {
+    if (i >= ids.length) {
+      render();
+      toast(failed ? ('모든 모임을 지웠어요 (실패 ' + failed + '개는 다시 시도해 주세요)')
+                   : ('모든 모임 ' + ids.length + '개를 지웠어요'));
+      refresh(true);
+      return;
+    }
+    var id = ids[i++];
+    apiPost({ action: 'deleteEvent', eventId: id, pin: adminPin }).then(function (r) {
+      if (r && r.ok && Array.isArray(r.events)) {
+        state.events = r.events;
+        lastSyncOk = Date.now(); lastError = '';
+      } else {
+        failed++;
+      }
+      step();
+    }).catch(function () {
+      failed++;
+      step();
+    });
+  }
+  step();
 }
 
 /* ---------- 이름 ---------- */
@@ -1037,7 +1096,8 @@ $('#syncOk').addEventListener('click', function () {
 })();
 
 /* 테스트에서 쓰는 작은 공개 창구 */
-window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won };
+window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won,
+  typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle };
 </script>
 </body>
 </html>

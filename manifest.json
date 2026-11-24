@@ -1,7 +1,7 @@
 {
-  "name": "C-PICK 참석·정산",
-  "short_name": "C-PICK 참석",
-  "description": "C-PICK 피클볼 동호회 — 매일 참석 투표와 번개 모임 1/N 정산(10원 미만 절사)",
+  "name": "진홍이가 만든 참석앱",
+  "short_name": "진홍이가 만든 참석앱",
+  "description": "C-PICK 피클볼 동호회 — 번개게임·번개회식 참석 투표와 1/N 정산(10원 미만 절사)",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
