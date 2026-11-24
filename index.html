@@ -97,6 +97,9 @@ main{padding:12px 12px 24px;max-width:720px;margin:0 auto}
   100%{box-shadow:0 0 0 6px rgba(215,230,74,0),0 1px 3px rgba(22,32,46,.07)}
 }
 .meta{font-size:13.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+/* 주최자 줄 — 제목 바로 아래, 장소 위 */
+.host{font-size:13.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+.host b{color:#2b3a4f;font-weight:800}
 .counts{display:flex;gap:10px;font-size:13px;font-weight:700;margin:10px 0 8px;color:var(--muted)}
 .counts b.a{color:var(--yes)} .counts b.m{color:var(--maybe)} .counts b.n{color:var(--no)}
 
@@ -250,6 +253,10 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
     <div class="field">
       <label for="evTitle" id="evTitleLabel">제목 / 메모 (비우면 '번개게임')</label>
       <input type="text" id="evTitle" maxlength="80" placeholder="예) 화요일 번개게임">
+    </div>
+    <div class="field">
+      <label for="evHost">주최자</label>
+      <input type="text" id="evHost" maxlength="20" placeholder="예) 이진홍" autocomplete="off">
     </div>
     <div class="field" id="feeField">
       <label for="evFee">총 사용료(원)</label>
@@ -421,10 +428,40 @@ var LEGACY_TITLES = ['정기 모임', '번개 모임'];   /* 예전 기본 제�
 function typeLabel(t) { return TYPE_LABEL[t] || TYPE_LABEL['정기']; }
 function typeEmoji(t) { return TYPE_EMOJI[t] || TYPE_EMOJI['정기']; }
 function displayTitle(ev) {
-  var t = String((ev && ev.title) || '').trim();
+  var t = titleOf(ev);
   if (!t || LEGACY_TITLES.indexOf(t) >= 0) return typeLabel(ev && ev.type);
   return t;
 }
+
+/* ---------- 주최자 ----------
+   이미 배포된 Apps Script 는 모임 저장 칸이 '제목/메모' 하나뿐이라
+   주최자 이름을 제목 앞에 [주최:이름] 태그로 붙여 저장한다.
+   (시트에서도 그대로 읽히고, 화면·카톡 문구에서는 태그를 떼고 보여 준다.) */
+var HOST_MAX = 20;
+var TITLE_MAX = 80;                                  /* 시트 '제목/메모' 칸 한도 */
+var HOST_TAG = /^\s*\[주최\s*:\s*([^\]]*)\]\s*/;
+function cleanHost(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, HOST_MAX);
+}
+function parseHost(title) {
+  var t = String(title === null || title === undefined ? '' : title);
+  var m = HOST_TAG.exec(t);
+  if (!m) return { host: '', title: t.trim() };
+  return { host: cleanHost(m[1]), title: t.slice(m[0].length).trim() };
+}
+function hostOf(ev) { return parseHost(ev && ev.title).host; }
+function titleOf(ev) { return parseHost(ev && ev.title).title; }   /* 태그를 뺀 순수 제목 */
+function withHost(host, title) {
+  var h = cleanHost(host);
+  var t = String(title === null || title === undefined ? '' : title).trim();
+  if (!h) return t;
+  var tag = '[주최:' + h + ']';
+  var room = TITLE_MAX - tag.length - 1;
+  if (room > 0 && t.length > room) t = t.slice(0, room).trim();
+  return tag + (t ? ' ' + t : '');
+}
+function hostLine(ev) { var h = hostOf(ev); return h ? '👤 주최: ' + h : ''; }
 
 /* ---------- 1/N 정산 (10원 미만 절사) ---------- */
 function splitFee(fee, attendees, unit) {
@@ -495,6 +532,8 @@ function kakaoText(ev, unit, pay) {
   lines.push(typeEmoji(ev.type) + ' C-PICK ' + typeLabel(ev.type) + ' 정산');
   var title = displayTitle(ev);
   if (title !== typeLabel(ev.type)) lines.push('· ' + title);
+  var hostTxt = hostLine(ev);
+  if (hostTxt) lines.push(hostTxt);
   lines.push('📅 ' + dateLabel(ev.date) + ' ' + timeLabel(ev.time));
   if (ev.place) lines.push('📍 ' + ev.place);
   lines.push('💰 총 사용료 ' + won(s.fee) + '원');
@@ -526,6 +565,8 @@ function inviteText(ev) {
   var title = displayTitle(ev);
   if (title && title !== typeLabel(ev.type)) head += ' ' + title;
   lines.push(head);
+  var hostTxt = hostLine(ev);
+  if (hostTxt) lines.push(hostTxt);
   lines.push('📅 ' + dateLabel(ev.date) + ' ' + timeLabel(ev.time) + (ev.place ? ' · ' + ev.place : ''));
   lines.push('👇 눌러서 참석 투표하기');
   lines.push(shareLink(ev));
@@ -788,6 +829,7 @@ function cardHTML(ev) {
       '<h3 class="title">' + esc(displayTitle(ev)) + '</h3>' +
       '<button class="link-copy" data-share="' + esc(ev.id) + '" title="모임 링크를 카톡방에 붙여넣기">🔗 복사</button>' +
     '</div>' +
+    (hostOf(ev) ? '<div class="host">👤 주최: <b>' + esc(hostOf(ev)) + '</b></div>' : '') +
     (ev.place ? '<div class="meta">📍 ' + esc(ev.place) + '</div>' : '') +
     '<div class="counts"><span>참석 <b class="a">' + att.length + '</b></span><span>미정 <b class="m">' + maybe.length + '</b></span><span>불참 <b class="n">' + no.length + '</b></span></div>' +
     '<div class="votes">' +
@@ -918,7 +960,9 @@ function openEventSheet(ev) {
   $('#evDate').value = ev ? ev.date : todayISO();
   $('#evTime').value = ev ? ev.time : '19:00';
   $('#evPlace').value = ev ? ev.place : '';
-  $('#evTitle').value = ev ? ev.title : '';
+  /* 저장된 제목에 붙은 [주최:이름] 태그는 떼고, 주최자 칸으로 옮긴다 */
+  $('#evTitle').value = ev ? titleOf(ev) : '';
+  $('#evHost').value = ev ? hostOf(ev) : myNameTrim();
   $('#evFee').value = ev ? (ev.fee || '') : '';
   syncTypeUI();
   openMask('maskEvent');
@@ -957,7 +1001,8 @@ $('#evSave').addEventListener('click', function () {
     date: $('#evDate').value || todayISO(),
     time: $('#evTime').value || '19:00',
     place: $('#evPlace').value.trim(),
-    title: $('#evTitle').value.trim(),
+    /* 제목 칸에는 순수 제목만 보이고, 저장할 때만 [주최:이름] 태그를 붙인다 */
+    title: withHost($('#evHost').value, $('#evTitle').value),
     fee: Math.max(0, Number($('#evFee').value) || 0)
   };
   if (editId) { body.eventId = editId; body.pin = adminPin; }
@@ -1354,7 +1399,8 @@ function deepLinkId() {
 /* 테스트에서 쓰는 작은 공개 창구 */
 window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won,
   typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle, payLine: payLine, payInfo: payInfo,
-  inviteText: inviteText, shareLink: shareLink, appBaseUrl: appBaseUrl };
+  inviteText: inviteText, shareLink: shareLink, appBaseUrl: appBaseUrl,
+  hostOf: hostOf, titleOf: titleOf, hostLine: hostLine, parseHost: parseHost, withHost: withHost };
 </script>
 </body>
 </html>
