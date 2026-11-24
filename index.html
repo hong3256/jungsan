@@ -150,6 +150,22 @@ body.admin .adminrow{display:flex}
 .btn-primary{background:var(--navy);color:#fff}
 .btn-ghost{background:#eef2f8;color:#3a4a61}
 .btn-danger{background:#fdecec;color:#b22b2b}
+/* 송금 안내 선택(계좌 / 카톡) */
+.paybox{background:#f7f9fc;border:1px solid #e6ecf5;border-radius:14px;padding:11px;margin-bottom:12px}
+.paybox .paylabel{font-size:13px;font-weight:800;color:#4a5768;margin-bottom:7px}
+.payseg{display:flex;gap:7px}
+.payseg button{flex:1 1 0;min-width:0;height:44px;border-radius:12px;background:#eef2f8;border:1.5px solid transparent;
+  font-weight:800;font-size:13px;color:var(--muted);padding:0 6px;white-space:nowrap}
+.payseg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.payseg button.on[data-pay="kakao"]{background:#fee500;color:#3b1e1e;border-color:#e6cf00}
+.payfields{display:none;margin-top:10px}
+.payfields.on{display:block}
+.payfields .field{margin-bottom:8px}
+.payfields .field:last-of-type{margin-bottom:6px}
+.payfoot{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px}
+.payfoot .paynote{width:100%;font-size:12px;color:var(--muted);line-height:1.4}
+.payfoot .payclear{height:32px;padding:0 10px;border-radius:9px;background:#fff;border:1px solid var(--line);
+  color:#6a7688;font-weight:700;font-size:12.5px;flex:0 0 auto;margin-left:auto}
 textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px solid var(--line);padding:12px;font-size:14px;line-height:1.55;background:#fbfcfe;resize:vertical}
 .note{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
 .toast{position:fixed;left:50%;bottom:calc(88px + var(--safe-b));transform:translateX(-50%) translateY(10px);
@@ -295,11 +311,32 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
 <div class="mask" id="maskCopy">
   <div class="sheet">
     <h2>📋 카톡 정산 문구</h2>
+    <div class="paybox">
+      <div class="paylabel">송금 안내 (문구 맨 아래에 들어가요)</div>
+      <div class="payseg" id="payMode">
+        <button type="button" data-pay="acct" class="on">🏦 계좌번호 입력</button>
+        <button type="button" data-pay="kakao">💬 카톡으로 보내주세요</button>
+      </div>
+      <div class="payfields on" id="payFields">
+        <div class="field">
+          <label for="payAcct">은행 / 계좌번호</label>
+          <input type="text" id="payAcct" maxlength="60" autocomplete="off" placeholder="예) 국민은행 123-45-6789012">
+        </div>
+        <div class="field">
+          <label for="payHolder">예금주(계좌명)</label>
+          <input type="text" id="payHolder" maxlength="20" autocomplete="off" placeholder="예) 홍길동">
+        </div>
+        <div class="payfoot">
+          <span class="paynote">입력한 계좌는 <b>이 기기에만</b> 저장되고, 시트·다른 회원에게는 보이지 않아요.</span>
+          <button type="button" class="payclear" id="payClear">지우기</button>
+        </div>
+      </div>
+    </div>
     <textarea class="copyarea" id="copyText" spellcheck="false"></textarea>
     <div class="note">복사가 안 되면 위 글자를 길게 눌러 '복사'하고 카톡방에 붙여넣으세요.</div>
     <div class="actions">
       <button class="btn-ghost" id="copyClose">닫기</button>
-      <button class="btn-primary" id="copyOk">복사</button>
+      <button class="btn-primary" id="copyOk">📋 문구 복사</button>
     </div>
   </div>
 </div>
@@ -315,7 +352,8 @@ textarea.copyarea{width:100%;min-height:190px;border-radius:12px;border:1.5px so
    ============================================================ */
 var DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxzC_FpVdj7R9HM-AFfNi-US5RNGZhQBnV_kt3hM3nW1FoPqAiIF_a-sm42wx5n75X2Jw/exec';
 
-var K = { name: 'cpick.myName', url: 'cpick.syncUrl', local: 'cpick.localData', admin: 'cpick.adminOn' };
+var K = { name: 'cpick.myName', url: 'cpick.syncUrl', local: 'cpick.localData', admin: 'cpick.adminOn',
+  payMode: 'cpick.payMode', payAcct: 'cpick.payAcct', payHolder: 'cpick.payHolder' };
 var LOCAL_PIN = '0629';
 
 /* ---------- 작은 도구 ---------- */
@@ -389,8 +427,41 @@ function namesOf(ev, st) {
   return (ev.votes || []).filter(function (v) { return v.status === st; }).map(function (v) { return v.name; });
 }
 
+/* ---------- 송금 안내 (계좌번호 / 카톡으로 보내주세요) ----------
+   계좌번호·예금주는 개인정보라서 서버(구글 시트)·GitHub 코드에 절대 넣지 않고
+   이 기기의 localStorage 에만 저장한다. */
+var PAY = { mode: 'acct', acct: '', holder: '' };
+function loadPay() {
+  try {
+    PAY.acct = localStorage.getItem(K.payAcct) || '';
+    PAY.holder = localStorage.getItem(K.payHolder) || '';
+    var m = localStorage.getItem(K.payMode);
+    PAY.mode = (m === 'kakao') ? 'kakao' : 'acct';
+  } catch (e) {}
+  return PAY;
+}
+function savePay() {
+  try {
+    localStorage.setItem(K.payMode, PAY.mode);
+    localStorage.setItem(K.payAcct, PAY.acct);
+    localStorage.setItem(K.payHolder, PAY.holder);
+  } catch (e) {}
+}
+function payInfo() {
+  if (PAY.mode === 'kakao') return { mode: 'kakao' };
+  return { mode: 'acct', account: String(PAY.acct || '').trim(), holder: String(PAY.holder || '').trim() };
+}
+/* 문구 맨 아래에 붙는 송금 안내 한 줄 */
+function payLine(pay) {
+  if (!pay) return '';
+  if (pay.mode === 'kakao') return '💬 카톡으로 보내주세요';
+  var a = String(pay.account || '').trim(), h = String(pay.holder || '').trim();
+  if (!a && !h) return '🏦 입금 계좌: (계좌번호를 넣어 주세요)';
+  return '🏦 입금 계좌: ' + (a + (h ? ' ' + h : '')).trim();
+}
+
 /* ---------- 카톡 정산 문구 ---------- */
-function kakaoText(ev, unit) {
+function kakaoText(ev, unit, pay) {
   var att = attendeesOf(ev);
   var s = splitFee(ev.fee, att.length, unit);
   var lines = [];
@@ -412,6 +483,8 @@ function kakaoText(ev, unit) {
   if (maybe.length) lines.push('미정: ' + maybe.join(', '));
   var no = namesOf(ev, '불참');
   if (no.length) lines.push('불참: ' + no.join(', '));
+  var payTxt = payLine(pay);
+  if (payTxt) { lines.push(''); lines.push(payTxt); }
   return lines.join('\n');
 }
 
@@ -865,13 +938,56 @@ function saveFee(id) {
 function showCopy(id) {
   var ev = state.events.filter(function (x) { return x.id === id; })[0];
   if (!ev) return;
-  var txt = kakaoText(ev, state.unit);
-  $('#copyText').value = txt;
+  copyId = id;
+  syncPayUI();
+  refreshCopyText();
   openMask('maskCopy');
-  copyToClipboard(txt).then(function (okCopy) {
+  copyToClipboard($('#copyText').value).then(function (okCopy) {
     toast(okCopy ? '정산 문구를 복사했어요 — 카톡방에 붙여넣기!' : '아래 글자를 길게 눌러 복사해 주세요');
   });
 }
+
+/* ---------- 정산 문구 모달의 송금 안내 ---------- */
+var copyId = null;
+function currentCopyEv() {
+  return copyId ? state.events.filter(function (x) { return x.id === copyId; })[0] : null;
+}
+function refreshCopyText() {
+  var ev = currentCopyEv();
+  if (!ev) return;
+  $('#copyText').value = kakaoText(ev, state.unit, payInfo());
+}
+function syncPayUI() {
+  $$('#payMode button').forEach(function (b) { b.classList.toggle('on', b.dataset.pay === PAY.mode); });
+  $('#payFields').classList.toggle('on', PAY.mode === 'acct');
+  $('#payAcct').value = PAY.acct;
+  $('#payHolder').value = PAY.holder;
+}
+$('#payMode').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-pay]');
+  if (!b || PAY.mode === b.dataset.pay) return;
+  PAY.mode = b.dataset.pay === 'kakao' ? 'kakao' : 'acct';
+  savePay();
+  syncPayUI();
+  refreshCopyText();
+});
+$('#payAcct').addEventListener('input', function () {
+  PAY.acct = $('#payAcct').value.slice(0, 60);
+  savePay();
+  refreshCopyText();
+});
+$('#payHolder').addEventListener('input', function () {
+  PAY.holder = $('#payHolder').value.slice(0, 20);
+  savePay();
+  refreshCopyText();
+});
+$('#payClear').addEventListener('click', function () {
+  PAY.acct = ''; PAY.holder = '';
+  savePay();
+  syncPayUI();
+  refreshCopyText();
+  toast('계좌 정보를 지웠어요');
+});
 function copyToClipboard(txt) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     return navigator.clipboard.writeText(txt).then(function () { return true; }).catch(function () { return legacyCopy(txt); });
@@ -1078,6 +1194,8 @@ $('#syncOk').addEventListener('click', function () {
 (function init() {
   resolveSync();
   try { myName = localStorage.getItem(K.name) || ''; } catch (e) { myName = ''; }
+  loadPay();
+  syncPayUI();
   $('#myName').value = myName;
   setAdmin(false);
   render();
@@ -1097,7 +1215,7 @@ $('#syncOk').addEventListener('click', function () {
 
 /* 테스트에서 쓰는 작은 공개 창구 */
 window.cpickCore = { splitFee: splitFee, kakaoText: kakaoText, groupEvents: groupEvents, dateLabel: dateLabel, won: won,
-  typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle };
+  typeLabel: typeLabel, typeEmoji: typeEmoji, displayTitle: displayTitle, payLine: payLine, payInfo: payInfo };
 </script>
 </body>
 </html>
