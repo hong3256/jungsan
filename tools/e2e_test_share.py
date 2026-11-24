@@ -43,6 +43,16 @@ def main():
                 continue
         return None
 
+    def card_by_title(page, title):
+        """제목이 정확히 같은 카드(부분 문자열 오인 방지)"""
+        for c in page.locator(".card").all():
+            try:
+                if c.locator(".title").inner_text().strip() == title:
+                    return c
+            except Exception:
+                continue
+        return None
+
     with sync_playwright() as p:
         browser = p.chromium.launch()
         ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2,
@@ -188,6 +198,36 @@ def main():
            and pos["top"] < pos["h"] and pos["bottom"] > 0, pos)
         ok("스크롤한 카드도 강조", pos is not None and "hl" in pos["hl"], pos)
         page.screenshot(path=os.path.join(SHOTS, "cpick-att-share-deeplink-scroll.png"))
+
+        # ---------- 한참 지난 모임(목록에 10개만 보일 때)도 딥링크로 찾아감 ----------
+        page.goto(url)
+        page.wait_for_timeout(500)
+        for i in range(11):
+            page.click("#btnNew")
+            page.fill("#evDate", "2025-01-%02d" % (i + 1))
+            page.fill("#evTitle", "작년 번개게임 %d" % (i + 1))
+            page.click("#evSave")
+            page.wait_for_timeout(280)
+        page.goto(url)
+        page.wait_for_timeout(700)
+        page.click('#tabs button[data-tab="정기"]')
+        page.wait_for_timeout(300)
+        ok("지난 모임은 10개까지만 보임", card_by_title(page, "작년 번개게임 1") is None,
+           [c.locator(".title").inner_text() for c in page.locator(".card").all()][:12])
+        old_all = page.evaluate("""() => window.__sheetGrid['모임목록'].filter(r => String(r[5] || '') === '작년 번개게임 1')[0][0]""")
+        page.goto(base + "/index.html?ev=" + str(old_all) + "&sync=/mock")
+        page.wait_for_timeout(1200)
+        old = card_by_title(page, "작년 번개게임 1")
+        okal = page.evaluate("""(id) => {
+          const el = document.querySelector('article.card[data-id="' + id + '"]');
+          if (!el) return null;
+          let p = el.previousElementSibling, sec = '';
+          while (p) { if (p.className && String(p.className).indexOf('sec') >= 0) { sec = p.textContent; break; } p = p.previousElementSibling; }
+          return {hl: el.className, sec: sec};
+        }""", str(old_all))
+        ok("10개 밖의 오래된 모임도 딥링크로 표시·강조", old is not None and okal is not None
+           and "hl" in okal["hl"], okal)
+        ok("그 모임은 '지난 모임' 구역에 표시", okal is not None and "지난 모임" in okal["sec"], okal)
 
         # ---------- ?ev=없는 모임 → 안내 ----------
         page.goto(base + "/index.html?ev=NOPE&sync=/mock")
